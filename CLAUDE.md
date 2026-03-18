@@ -89,7 +89,11 @@ docs/               → Specs, setup guide, governance
 
 ## Current Phase
 
-**Fase 1: Fundación y Prototipo Básico**
-- Spec: `docs/SPEC-FASE-1.md`
-- Setup: `docs/SETUP-TECNICO-FASE-1.md`
+**Fase 2: Motor de Navegación y Routing**
+- Spec: `docs/SPEC-FASE-2.md`
+- Changelog: `docs/CHANGELOG-FASE-2.md`
 - Governance: `docs/GOBERNANZA-PROYECTO.md`
+
+**Fase 1: Fundación y Prototipo Básico** ✅ Completada
+- Spec: `docs/SPEC-FASE-1.md`
+- Changelog: `docs/CHANGELOG-FASE-1.md`

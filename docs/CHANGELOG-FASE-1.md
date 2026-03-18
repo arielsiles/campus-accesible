@@ -1,6 +1,7 @@
-# Historial de Cambios — Entorno de Desarrollo
+# Historial de Cambios — Fase 1: Fundación y Prototipo Básico
 
-> Registro cronológico de instalaciones, configuraciones y cambios en el entorno de desarrollo del proyecto **Campus GPS Accesible**.
+> Registro cronológico de setup, implementación y cambios durante la Fase 1 del proyecto **Campus GPS Accesible**.
+> **Estado:** ✅ Completada (2026-03-18)
 
 ---
 
