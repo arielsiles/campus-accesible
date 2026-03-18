@@ -1,12 +1,15 @@
-// FR-003, FR-005: Main map screen with route display
-import React, { useEffect } from "react";
+// FR-003, FR-004, FR-005: Main map screen with route display and GPS
+import React, { useEffect, useState } from "react";
 import { StyleSheet, View, Text, ActivityIndicator } from "react-native";
 import MapView from "../components/MapView";
 import RoutePolyline from "../components/RoutePolyline";
 import WaypointMarker from "../components/WaypointMarker";
+import UserLocationMarker from "../components/UserLocationMarker";
+import PermissionRequestModal from "../components/PermissionRequestModal";
 import { useMapStore } from "../store/mapStore";
 import { useRoutes } from "../hooks/useRoutes";
 import { useRoute } from "../hooks/useRoute";
+import { useLocation } from "../hooks/useLocation";
 
 export default function MapScreen() {
   const center = useMapStore((s) => s.center);
@@ -16,6 +19,18 @@ export default function MapScreen() {
 
   const { routes, loading: loadingRoutes } = useRoutes();
   const { route, loading: loadingRoute, error } = useRoute(selectedRouteId);
+  const { permissionStatus, requestPermission } = useLocation();
+
+  // FR-004: Show permission modal when status is undetermined
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+
+  useEffect(() => {
+    if (permissionStatus === "undetermined") {
+      setShowPermissionModal(true);
+    } else {
+      setShowPermissionModal(false);
+    }
+  }, [permissionStatus]);
 
   // FR-005: Auto-select first route when routes load
   useEffect(() => {
@@ -31,9 +46,19 @@ export default function MapScreen() {
       accessibilityLabel="Pantalla del mapa de navegación del campus"
     >
       <MapView center={center} zoom={zoom}>
+        {permissionStatus === "granted" && <UserLocationMarker />}
         {route && <RoutePolyline routeData={route} />}
         {route && <WaypointMarker routeData={route} />}
       </MapView>
+
+      <PermissionRequestModal
+        visible={showPermissionModal}
+        onRequestPermission={async () => {
+          await requestPermission();
+          setShowPermissionModal(false);
+        }}
+        onDismiss={() => setShowPermissionModal(false)}
+      />
 
       {(loadingRoutes || loadingRoute) && (
         <View
