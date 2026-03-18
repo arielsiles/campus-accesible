@@ -50,6 +50,32 @@ describe("GET /api/routes/:id [FR-007]", () => {
     ).toBe("LineString");
   });
 
+  it("includes transportType and lines for transport_stop waypoints [TST-FR-205-001]", async () => {
+    const res = await app.request("/api/routes/test-route-1");
+    const body = await res.json();
+
+    const transportStops = body.features.filter(
+      (f: Record<string, unknown>) => {
+        const props = f.properties as Record<string, unknown>;
+        return props.waypointType === "transport_stop";
+      }
+    );
+
+    expect(transportStops.length).toBeGreaterThan(0);
+
+    const metroStop = transportStops.find(
+      (f: Record<string, unknown>) =>
+        (f.properties as Record<string, unknown>).waypointId === "wp-metro-cu"
+    );
+    expect(metroStop).toBeDefined();
+    expect(
+      (metroStop.properties as Record<string, unknown>).transportType
+    ).toBe("metro");
+    expect(
+      (metroStop.properties as Record<string, unknown>).transportLines
+    ).toEqual(["6"]);
+  });
+
   it("responds 404 for non-existing route [FR-007]", async () => {
     const res = await app.request("/api/routes/no-existe");
 
