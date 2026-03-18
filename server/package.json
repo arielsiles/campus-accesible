@@ -17,6 +17,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@campus-gps/routing-engine": "workspace:*",
     "@campus-gps/shared-types": "workspace:*",
     "@hono/node-server": "^1.19.11",
     "@prisma/client": "^6",
