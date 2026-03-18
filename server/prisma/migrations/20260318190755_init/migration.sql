@@ -2,7 +2,13 @@
 CREATE EXTENSION IF NOT EXISTS "postgis";
 
 -- CreateEnum
-CREATE TYPE "waypoint_type" AS ENUM ('BUILDING', 'ENTRANCE', 'INTERSECTION', 'BUS_STOP', 'METRO', 'LANDMARK', 'PARKING', 'ACCESSIBILITY_FEATURE');
+CREATE TYPE "waypoint_type" AS ENUM ('entrance', 'intersection', 'building', 'transport_stop', 'landmark', 'hazard', 'rest_area', 'information_point');
+
+-- CreateEnum
+CREATE TYPE "surface_type" AS ENUM ('paved', 'cobblestone', 'gravel', 'dirt', 'tactile');
+
+-- CreateEnum
+CREATE TYPE "risk_level" AS ENUM ('none', 'low', 'medium', 'high');
 
 -- CreateTable
 CREATE TABLE "routes" (
@@ -24,7 +30,7 @@ CREATE TABLE "waypoints" (
     "waypoint_type" "waypoint_type" NOT NULL,
     "latitude" DOUBLE PRECISION NOT NULL,
     "longitude" DOUBLE PRECISION NOT NULL,
-    "order" INTEGER NOT NULL,
+    "order_index" INTEGER NOT NULL,
     "route_id" TEXT NOT NULL,
 
     CONSTRAINT "waypoints_pkey" PRIMARY KEY ("id")
@@ -35,10 +41,11 @@ CREATE TABLE "route_segments" (
     "id" TEXT NOT NULL,
     "segment_id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "surface_type" TEXT NOT NULL,
+    "surface_type" "surface_type" NOT NULL,
     "elevation_change" DOUBLE PRECISION NOT NULL DEFAULT 0,
-    "risk_level" INTEGER NOT NULL DEFAULT 0,
-    "order" INTEGER NOT NULL,
+    "risk_level" "risk_level" NOT NULL DEFAULT 'none',
+    "geometry_geojson" TEXT NOT NULL,
+    "order_index" INTEGER NOT NULL,
     "route_id" TEXT NOT NULL,
 
     CONSTRAINT "route_segments_pkey" PRIMARY KEY ("id")

@@ -19,15 +19,15 @@ routeRoutes.get("/routes", async (c) => {
   return c.json(routes);
 });
 
-// GET /api/routes/:id — get route with waypoints and segments
+// GET /api/routes/:id — get route with waypoints and segments as GeoJSON
 routeRoutes.get("/routes/:id", async (c) => {
   const { id } = c.req.param();
 
   const route = await prisma.route.findUnique({
     where: { id },
     include: {
-      waypoints: { orderBy: { order: "asc" } },
-      segments: { orderBy: { order: "asc" } },
+      waypoints: { orderBy: { orderIndex: "asc" } },
+      segments: { orderBy: { orderIndex: "asc" } },
     },
   });
 
@@ -60,38 +60,21 @@ routeRoutes.get("/routes/:id", async (c) => {
           name: wp.name,
           description: wp.description,
           waypointType: wp.waypointType,
-          order: wp.order,
         },
       })),
-      // Segment features (LineString) — built from consecutive waypoints
-      ...route.segments.map((seg, i) => {
-        const startWp = route.waypoints[i];
-        const endWp = route.waypoints[i + 1];
-        const coordinates =
-          startWp && endWp
-            ? [
-                [startWp.longitude, startWp.latitude],
-                [endWp.longitude, endWp.latitude],
-              ]
-            : [];
-
-        return {
-          type: "Feature" as const,
-          geometry: {
-            type: "LineString" as const,
-            coordinates,
-          },
-          properties: {
-            featureType: "route-segment",
-            segmentId: seg.segmentId,
-            name: seg.name,
-            surfaceType: seg.surfaceType,
-            elevationChange: seg.elevationChange,
-            riskLevel: seg.riskLevel,
-            order: seg.order,
-          },
-        };
-      }),
+      // Segment features (LineString) — geometry from geometryGeoJson field
+      ...route.segments.map((seg) => ({
+        type: "Feature" as const,
+        geometry: JSON.parse(seg.geometryGeoJson),
+        properties: {
+          featureType: "route-segment",
+          segmentId: seg.segmentId,
+          name: seg.name,
+          surfaceType: seg.surfaceType,
+          elevationChange: seg.elevationChange,
+          riskLevel: seg.riskLevel,
+        },
+      })),
     ],
   };
 

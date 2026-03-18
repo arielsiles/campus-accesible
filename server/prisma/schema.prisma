@@ -1,4 +1,4 @@
-// FR-008: Database Schema
+// FR-008: Database Schema — aligned with SPEC-FASE-1.md §4.2
 // Prisma schema for campus GPS routes with PostGIS geospatial support
 
 generator client {
@@ -35,7 +35,7 @@ model Waypoint {
   waypointType WaypointType @map("waypoint_type")
   latitude     Float
   longitude    Float
-  order        Int
+  orderIndex   Int          @map("order_index")
 
   routeId String @map("route_id")
   route   Route  @relation(fields: [routeId], references: [id], onDelete: Cascade)
@@ -45,15 +45,14 @@ model Waypoint {
 
 /// Segment of a route between two waypoints
 model RouteSegment {
-  id              String  @id @default(cuid())
-  segmentId       String  @unique @map("segment_id")
+  id              String      @id @default(cuid())
+  segmentId       String      @unique @map("segment_id")
   name            String
-  surfaceType     String  @map("surface_type")
-  elevationChange Float   @default(0) @map("elevation_change")
-  riskLevel       Int     @default(0) @map("risk_level")
-  order           Int
-  // PostGIS geometry stored as raw SQL — managed via raw queries
-  // Prisma does not natively support geometry columns
+  surfaceType     SurfaceType @map("surface_type")
+  elevationChange Float       @default(0) @map("elevation_change")
+  riskLevel       RiskLevel   @default(none) @map("risk_level")
+  geometryGeoJson String      @map("geometry_geojson") @db.Text
+  orderIndex      Int         @map("order_index")
 
   routeId String @map("route_id")
   route   Route  @relation(fields: [routeId], references: [id], onDelete: Cascade)
@@ -62,14 +61,33 @@ model RouteSegment {
 }
 
 enum WaypointType {
-  BUILDING
-  ENTRANCE
-  INTERSECTION
-  BUS_STOP
-  METRO
-  LANDMARK
-  PARKING
-  ACCESSIBILITY_FEATURE
+  entrance
+  intersection
+  building
+  transport_stop
+  landmark
+  hazard
+  rest_area
+  information_point
 
   @@map("waypoint_type")
+}
+
+enum SurfaceType {
+  paved
+  cobblestone
+  gravel
+  dirt
+  tactile
+
+  @@map("surface_type")
+}
+
+enum RiskLevel {
+  none
+  low
+  medium
+  high
+
+  @@map("risk_level")
 }

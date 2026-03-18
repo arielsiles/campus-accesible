@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CampusRouteCollection",
+  "description": "Schema GeoJSON para rutas del campus universitario",
+  "type": "object",
+  "required": ["type", "features"],
+  "properties": {
+    "type": { "const": "FeatureCollection" },
+    "features": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "$ref": "#/definitions/RouteSegmentFeature" },
+          { "$ref": "#/definitions/WaypointFeature" }
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "RouteSegmentFeature": {
+      "type": "object",
+      "required": ["type", "geometry", "properties"],
+      "properties": {
+        "type": { "const": "Feature" },
+        "geometry": {
+          "type": "object",
+          "required": ["type", "coordinates"],
+          "properties": {
+            "type": { "const": "LineString" },
+            "coordinates": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": { "type": "number" },
+                "minItems": 2,
+                "maxItems": 3
+              },
+              "minItems": 2
+            }
+          }
+        },
+        "properties": {
+          "type": "object",
+          "required": ["featureType", "segmentId", "name", "surfaceType", "elevationChange", "riskLevel"],
+          "properties": {
+            "featureType": { "const": "route-segment" },
+            "segmentId": { "type": "string" },
+            "name": { "type": "string" },
+            "surfaceType": { "enum": ["paved", "cobblestone", "gravel", "dirt", "tactile"] },
+            "elevationChange": { "type": "number", "description": "Cambio de elevación en metros (positivo = subida)" },
+            "riskLevel": { "enum": ["none", "low", "medium", "high"] }
+          }
+        }
+      }
+    },
+    "WaypointFeature": {
+      "type": "object",
+      "required": ["type", "geometry", "properties"],
+      "properties": {
+        "type": { "const": "Feature" },
+        "geometry": {
+          "type": "object",
+          "required": ["type", "coordinates"],
+          "properties": {
+            "type": { "const": "Point" },
+            "coordinates": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 3
+            }
+          }
+        },
+        "properties": {
+          "type": "object",
+          "required": ["featureType", "waypointId", "name", "description", "waypointType"],
+          "properties": {
+            "featureType": { "const": "waypoint" },
+            "waypointId": { "type": "string" },
+            "name": { "type": "string" },
+            "description": { "type": "string" },
+            "waypointType": {
+              "enum": [
+                "entrance",
+                "intersection",
+                "building",
+                "transport_stop",
+                "landmark",
+                "hazard",
+                "rest_area",
+                "information_point"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}
