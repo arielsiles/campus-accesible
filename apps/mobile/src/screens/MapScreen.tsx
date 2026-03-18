@@ -1,15 +1,19 @@
-// FR-003, FR-004, FR-005: Main map screen with route display and GPS
+// FR-003, FR-004, FR-005, FR-206: Main map screen with route display, GPS, and search
 import React, { useEffect, useState } from "react";
 import { StyleSheet, View, Text, ActivityIndicator } from "react-native";
+import type { SearchResult } from "@campus-gps/shared-types";
 import MapView from "../components/MapView";
 import RoutePolyline from "../components/RoutePolyline";
 import WaypointMarker from "../components/WaypointMarker";
 import UserLocationMarker from "../components/UserLocationMarker";
 import PermissionRequestModal from "../components/PermissionRequestModal";
+import SearchBar from "../components/SearchBar";
+import SearchResults from "../components/SearchResults";
 import { useMapStore } from "../store/mapStore";
 import { useRoutes } from "../hooks/useRoutes";
 import { useRoute } from "../hooks/useRoute";
 import { useLocation } from "../hooks/useLocation";
+import { useSearch } from "../hooks/useSearch";
 
 export default function MapScreen() {
   const center = useMapStore((s) => s.center);
@@ -20,6 +24,10 @@ export default function MapScreen() {
   const { routes, loading: loadingRoutes } = useRoutes();
   const { route, loading: loadingRoute, error } = useRoute(selectedRouteId);
   const { permissionStatus, requestPermission } = useLocation();
+  const { results: searchResults, loading: searchLoading, search, clear: clearSearch } = useSearch();
+
+  // FR-206: Track search visibility
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   // FR-004: Show permission modal when status is undetermined
   const [showPermissionModal, setShowPermissionModal] = useState(false);
@@ -39,6 +47,24 @@ export default function MapScreen() {
     }
   }, [routes, selectedRouteId, selectRoute]);
 
+  // FR-206: Handle search and destination selection
+  const handleSearch = (query: string) => {
+    search(query);
+    setShowSearchResults(true);
+  };
+
+  const handleClearSearch = () => {
+    clearSearch();
+    setShowSearchResults(false);
+  };
+
+  const handleSelectDestination = (result: SearchResult) => {
+    // FR-206: Center map on selected waypoint
+    useMapStore.getState().setCenter(result.coordinates);
+    setShowSearchResults(false);
+    clearSearch();
+  };
+
   return (
     <View
       style={styles.container}
@@ -50,6 +76,20 @@ export default function MapScreen() {
         {route && <RoutePolyline routeData={route} />}
         {route && <WaypointMarker routeData={route} />}
       </MapView>
+
+      {/* FR-206: Search overlay */}
+      <View style={styles.searchOverlay}>
+        <SearchBar onSearch={handleSearch} onClear={handleClearSearch} />
+        {showSearchResults && (searchResults.length > 0 || searchLoading) && (
+          <View style={styles.searchResultsContainer}>
+            <SearchResults
+              results={searchResults}
+              loading={searchLoading}
+              onSelect={handleSelectDestination}
+            />
+          </View>
+        )}
+      </View>
 
       <PermissionRequestModal
         visible={showPermissionModal}
@@ -87,6 +127,16 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  searchOverlay: {
+    position: "absolute",
+    top: 50,
+    left: 16,
+    right: 16,
+    zIndex: 10,
+  },
+  searchResultsContainer: {
+    marginTop: 4,
   },
   loadingOverlay: {
     position: "absolute",
