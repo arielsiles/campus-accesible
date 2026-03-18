@@ -268,6 +268,88 @@ development/
 - **Configuración:** Añadido bloque `prisma.seed` en `server/package.json`
 - **Estado:** OK
 
+## [2026-03-18] — Servidor, Tipos Compartidos y Primer Commit (Fase 1)
+
+### Configuración — Servidor Hono [FR-007]
+
+- **Categoría:** Configuración
+- **Archivos creados:**
+
+| Archivo | Descripción |
+|---------|-------------|
+| `server/src/app.ts` | App Hono con CORS y manejo de errores (separada de startup para testing) |
+| `server/src/index.ts` | Entry point con `@hono/node-server` |
+| `server/src/routes/health.ts` | `GET /api/health` → `{ status: "ok", timestamp }` |
+| `server/src/routes/routes.ts` | `GET /api/routes` (listado) y `GET /api/routes/:id` (GeoJSON FeatureCollection) |
+
+- **Dependencia añadida:** `@hono/node-server@^1.19.11`
+- **Endpoints implementados:**
+
+| Método | Ruta | Respuesta |
+|--------|------|-----------|
+| GET | `/api/health` | `200 { status: "ok", timestamp: "<ISO>" }` |
+| GET | `/api/routes` | `200 [{ id, name, description }]` |
+| GET | `/api/routes/:id` | `200 GeoJSON FeatureCollection` con waypoints (Point) y segments (LineString) |
+| GET | `/api/routes/:id` (inexistente) | `404 { error: { code: "NOT_FOUND", message } }` |
+
+- **Verificación:** Servidor arranca en `http://localhost:3000`, todos los endpoints responden correctamente
+- **Estado:** OK
+
+### Configuración — Tipos Compartidos [FR-006]
+
+- **Categoría:** Configuración
+- **Archivos creados:**
+
+| Archivo | Descripción |
+|---------|-------------|
+| `packages/shared-types/src/geojson.ts` | Interfaces TypeScript: `WaypointType`, `RouteFeatureCollection`, `RouteFeature`, `HealthResponse`, `ErrorResponse`, etc. |
+| `packages/shared-types/src/index.ts` | Re-exports de todas las interfaces |
+
+- **Verificación:** `pnpm --filter @campus-gps/shared-types build` compila sin errores
+- **Estado:** OK
+
+### Configuración — Datos GeoJSON de Prueba [FR-006]
+
+- **Categoría:** Configuración
+- **Archivo:** `data/routes/test-route.geojson`
+- **Contenido:** FeatureCollection con 5 waypoints (Point) y 4 segments (LineString) de la ruta Medicina → Metro CU
+- **Estado:** OK
+
+### Configuración — App Mobile Placeholder [FR-002]
+
+- **Categoría:** Configuración
+- **Archivos creados:**
+
+| Archivo | Descripción |
+|---------|-------------|
+| `apps/mobile/App.tsx` | Entry point con pantalla placeholder, `accessibilityLabel` y `accessibilityRole` en español |
+| `apps/mobile/app.json` | Config Expo: nombre, slug, permisos GPS Android, plugin `expo-location` |
+
+- **Estado:** OK
+
+### Tests — Servidor [FR-007]
+
+- **Categoría:** Configuración
+- **Framework:** Vitest 2.1.9
+- **Archivos creados:**
+
+| Archivo | Tests | Descripción |
+|---------|-------|-------------|
+| `server/src/routes/health.test.ts` | 1 | Verifica `GET /api/health` responde 200 con status ok y timestamp ISO |
+| `server/src/routes/routes.test.ts` | 3 | Verifica listado de rutas, respuesta GeoJSON con waypoints/segments, y 404 para rutas inexistentes |
+
+- **Resultado:** 4/4 tests pasando
+- **Estado:** OK
+
+### Git — Primer Commit
+
+- **Categoría:** Configuración
+- **Rama:** `main` (renombrada desde `master`)
+- **Commit:** `68132ee` — `feat(init): bootstrap monorepo with server, mobile app, and shared types [FR-001, FR-002, FR-006, FR-007, FR-008]`
+- **Archivos:** 38 archivos, 12,771 inserciones
+- **Nota:** `.gitignore` actualizado para excluir `.claude/` (configuración local de Claude Code)
+- **Estado:** OK
+
 ---
 
 ## Resumen del Entorno — Estado Actual
@@ -285,6 +367,367 @@ development/
 | Java JDK 17 | 17.0.18 (Temurin) | Sí |
 | Docker Desktop | 27.2.0 | Sí |
 | Prisma Client | 6.19.2 | Sí |
+
+---
+
+## [2026-03-18] — Estado de Progreso Fase 1
+
+### Revisión de Avance — Spec vs Implementación
+
+> **Fecha de revisión:** 2026-03-18
+> **Spec de referencia:** `docs/SPEC-FASE-1.md`
+> **Commit actual:** `68132ee` (rama `main`)
+
+#### Resumen por Tarea
+
+| Tarea | Spec IDs | Estado | Progreso | Notas |
+|-------|----------|--------|----------|-------|
+| **T1.1** Monorepo Setup | FR-001 | **COMPLETADA** | 100% | Turborepo + pnpm workspaces, 3 packages, `turbo build` exitoso |
+| **T1.2** Expo + TypeScript | FR-002, NFR-003, NFR-005 | **PARCIAL** | 40% | Placeholder App.tsx con a11y labels. Falta: arranque verificado en emulador, navegación a MapScreen |
+| **T1.3** MapLibre GL | FR-003, NFR-001, NFR-002 | **NO INICIADA** | 0% | Falta: `MapScreen.tsx`, `MapView.tsx`, dependencia `@maplibre/maplibre-react-native`, mapa centrado en CU |
+| **T1.4** GPS Location | FR-004, NFR-001, NFR-002 | **NO INICIADA** | 0% | Falta: `UserLocationMarker`, `PermissionRequestModal`, `locationService`, `useLocation`, `locationStore`, tests |
+| **T1.5** GeoJSON Data Model | FR-006, NFR-003 | **PARCIAL** | 70% | Tipos TS creados, test-route.geojson creado. Falta: `route.schema.json`, tests de validación, alinear enums con spec |
+| **T1.6** Server + Database | FR-007, FR-008, NFR-001, NFR-004 | **CASI COMPLETA** | 90% | Endpoints funcionando, 4 tests pasando, Prisma schema y seed OK. Falta: `geometryGeoJson` en RouteSegment, alinear enums con spec |
+| **T1.7** Static Route Display | FR-005, NFR-002 | **NO INICIADA** | 0% | Falta: `RoutePolyline`, `WaypointMarker`, `routeService`, `useRoutes`, `useRoute` |
+| **T1.8** CI/CD Pipeline | FR-009, NFR-003 | **NO INICIADA** | 0% | Falta: `.github/workflows/ci.yml` |
+
+**Progreso global estimado: ~35-40%**
+
+#### Archivos Implementados vs Requeridos por Spec
+
+**Implementados (existentes en repo):**
+
+| Archivo | Spec ID | Estado |
+|---------|---------|--------|
+| `package.json` (root) | FR-001 | OK |
+| `pnpm-workspace.yaml` | FR-001 | OK |
+| `turbo.json` | FR-001 | OK |
+| `.gitignore`, `.gitattributes` | FR-001 | OK |
+| `apps/mobile/App.tsx` | FR-002 | Placeholder |
+| `apps/mobile/app.json` | FR-002 | OK |
+| `apps/mobile/tsconfig.json` | FR-002 | OK |
+| `packages/shared-types/src/geojson.ts` | FR-006 | OK (enums difieren del spec) |
+| `packages/shared-types/src/index.ts` | FR-006 | OK |
+| `data/routes/test-route.geojson` | FR-006 | OK |
+| `server/src/app.ts` | FR-007 | OK |
+| `server/src/index.ts` | FR-007 | OK |
+| `server/src/routes/health.ts` | FR-007 | OK |
+| `server/src/routes/routes.ts` | FR-007 | OK |
+| `server/src/routes/health.test.ts` | FR-007 | OK (1 test) |
+| `server/src/routes/routes.test.ts` | FR-007 | OK (3 tests) |
+| `server/prisma/schema.prisma` | FR-008 | OK (enums difieren del spec) |
+| `server/prisma/seed.ts` | FR-008 | OK |
+| `server/prisma/migrations/` | FR-008 | OK (1 migración) |
+| `docker-compose.yml` | FR-008 | OK |
+
+**Pendientes (requeridos por spec, no existen aún):**
+
+| Archivo | Spec ID | Tarea |
+|---------|---------|-------|
+| `apps/mobile/src/screens/MapScreen.tsx` | FR-003 | T1.3 |
+| `apps/mobile/src/components/MapView.tsx` | FR-003 | T1.3 |
+| `apps/mobile/src/components/UserLocationMarker.tsx` | FR-004 | T1.4 |
+| `apps/mobile/src/components/PermissionRequestModal.tsx` | FR-004 | T1.4 |
+| `apps/mobile/src/components/LoadingOverlay.tsx` | — | T1.3/T1.7 |
+| `apps/mobile/src/services/locationService.ts` | FR-004 | T1.4 |
+| `apps/mobile/src/services/routeService.ts` | FR-005 | T1.7 |
+| `apps/mobile/src/services/apiClient.ts` | FR-005 | T1.7 |
+| `apps/mobile/src/hooks/useLocation.ts` | FR-004 | T1.4 |
+| `apps/mobile/src/hooks/useRoutes.ts` | FR-005 | T1.7 |
+| `apps/mobile/src/hooks/useRoute.ts` | FR-005 | T1.7 |
+| `apps/mobile/src/store/locationStore.ts` | FR-004 | T1.4 |
+| `apps/mobile/src/store/mapStore.ts` | FR-003 | T1.3 |
+| `apps/mobile/src/components/RoutePolyline.tsx` | FR-005 | T1.7 |
+| `apps/mobile/src/components/WaypointMarker.tsx` | FR-005 | T1.7 |
+| `data/schemas/route.schema.json` | FR-006 | T1.5 |
+| `.github/workflows/ci.yml` | FR-009 | T1.8 |
+
+#### Discrepancias Detectadas entre Spec y Implementación
+
+1. **Enums de WaypointType:**
+   - Spec define: `entrance`, `intersection`, `building`, `transport_stop`, `landmark`, `hazard`, `rest_area`, `information_point`
+   - Implementado (Prisma): `BUILDING`, `ENTRANCE`, `INTERSECTION`, `BUS_STOP`, `METRO`, `LANDMARK`, `PARKING`, `ACCESSIBILITY_FEATURE`
+   - **Acción requerida:** Decidir cuál es la fuente de verdad y alinear
+
+2. **RouteSegment sin geometría:**
+   - Spec define campo `geometryGeoJson` (GeoJSON string) en RouteSegment
+   - Implementado: No tiene ese campo; las coordenadas se reconstruyen desde waypoints
+   - **Acción requerida:** Evaluar si se necesita almacenar geometría explícita
+
+3. **Enums de SurfaceType y RiskLevel:**
+   - Spec define `SurfaceType` como enum: `paved`, `cobblestone`, `gravel`, `dirt`, `tactile`
+   - Spec define `RiskLevel` como enum: `none`, `low`, `medium`, `high`
+   - Implementado (Prisma): `surfaceType` es String, `riskLevel` es Int
+   - **Acción requerida:** Migrar a enums para consistencia con spec
+
+#### Ruta Crítica para Ver la App Funcionando
+
+El camino mínimo para arrancar la app y ver avance visual:
+
+1. ~~**T1.3 — MapLibre GL** → Instalar dependencia, crear `MapScreen` + `MapView`, ver mapa de CU~~ ✅ Completado 2026-03-18
+2. **T1.7 — Ruta estática** → `RoutePolyline` + `WaypointMarker`, conectar con API, ver la ruta dibujada
+3. ~~**T1.2 — Completar** → Navegación para que la app abra en `MapScreen`~~ ✅ Completado 2026-03-18
+
+**Resultado esperado:** App abre → mapa de Ciudad Universitaria → ruta Medicina→Metro visible como línea azul con markers.
+
+T1.4 (GPS) y T1.8 (CI) no bloquean lo visual y se pueden hacer después.
+
+---
+
+## [2026-03-18] — T1.3 MapLibre GL + T1.2 Mobile App (Fase 1)
+
+### Configuración — MapLibre GL Integration [FR-003]
+
+- **Categoría:** Configuración
+- **Archivos creados:**
+
+| Archivo | Descripción |
+|---------|-------------|
+| `apps/mobile/src/store/mapStore.ts` | Store Zustand: center (CU: -3.7264, 40.4468), zoom (15), selectedRouteId. Exporta `CU_CENTER`, `DEFAULT_ZOOM` |
+| `apps/mobile/src/components/MapView.tsx` | Componente MapLibre GL con `Camera` centrado en CU, tiles de OpenFreeMap (liberty), `accessibilityLabel` en español |
+| `apps/mobile/src/screens/MapScreen.tsx` | Pantalla principal conectada a `useMapStore`, renderiza `MapView` con `accessibilityRole` y `accessibilityLabel` |
+
+- **Tile provider:** OpenFreeMap (`tiles.openfreemap.org/styles/liberty`) — gratuito, sin API key
+- **Props MapLibre v10:** `mapStyle` (no `styleURL`), `Camera.centerCoordinate`, `Camera.zoomLevel`
+- **TypeScript:** Compila sin errores (`tsc --noEmit`)
+- **Estado:** OK
+
+### Configuración — Mobile App Entry Point [FR-002]
+
+- **Categoría:** Configuración
+- **Archivos creados/modificados:**
+
+| Archivo | Cambio |
+|---------|--------|
+| `apps/mobile/index.js` | Nuevo entry point con `registerRootComponent(App)` |
+| `apps/mobile/App.tsx` | Refactorizado: ahora renderiza `MapScreen` en lugar de placeholder |
+| `apps/mobile/package.json` | `main` cambiado de `expo-router/entry` → `./index.js` |
+| `apps/mobile/app.json` | Añadido plugin `@maplibre/maplibre-react-native` |
+
+- **Estado:** OK
+
+### Instalación — expo-dev-client
+
+- **Categoría:** Instalación
+- **Versión:** 55.0.17
+- **Método:** `pnpm add -D expo-dev-client --filter @campus-gps/mobile`
+- **Motivo:** MapLibre usa módulos nativos incompatibles con Expo Go; requiere development build
+- **Estado:** OK
+
+### Corrección — CMake PATH_MAX en Windows (pnpm + NDK)
+
+- **Categoría:** Corrección
+- **Problema:** El build nativo de Android fallaba con `ninja: error: manifest 'build.ninja' still dirty after 100 tries`. CMake reportaba rutas de 197+ caracteres que excedían `CMAKE_OBJECT_PATH_MAX` (250).
+- **Causa raíz:** pnpm store (`.pnpm/`) crea rutas profundamente anidadas como:
+  ```
+  node_modules/.pnpm/expo-modules-core@2.2.3/node_modules/expo-modules-core/android/.cxx/Debug/.../
+  ```
+  El NDK de Android tiene límite de 250 caracteres para object files en Windows.
+- **Intentos fallidos:**
+  1. Junction `D:\cgps` → proyecto: CMake resuelve la ruta real, no la del junction
+- **Solución:** Configurar pnpm con `node-linker=hoisted` en `.npmrc`:
+  ```
+  node-linker=hoisted
+  ```
+  Esto aplana `node_modules` eliminando el nivel `.pnpm/`. La ruta pasa de ~197 a ~156 caracteres.
+- **Efecto colateral:** Requirió cambiar `main` en `package.json` de `node_modules/expo/AppEntry.js` a `./index.js` propio, ya que con hoisting el path relativo a `expo` cambia.
+- **Reinstalación:** `rm -rf node_modules && pnpm install` → 950 paquetes, 9.5s
+- **Estado:** OK
+
+### Creación — Iconos Placeholder
+
+- **Categoría:** Configuración
+- **Archivos creados:**
+
+| Archivo | Tamaño | Color |
+|---------|--------|-------|
+| `apps/mobile/assets/icon.png` | 1024x1024 | #1a73e8 (azul marca) |
+| `apps/mobile/assets/adaptive-icon.png` | 1024x1024 | #1a73e8 |
+| `apps/mobile/assets/splash-icon.png` | 200x200 | #1a73e8 |
+
+- **Método:** Generados con script Node.js (PNG sólidos)
+- **Nota:** Son placeholders temporales; reemplazar con diseño real en fases posteriores
+- **Estado:** OK (temporal)
+
+### Build — Android Development Build
+
+- **Categoría:** Configuración
+- **Método:** `npx expo run:android`
+- **Resultado:** BUILD SUCCESSFUL en 2m 29s (255 tasks Gradle)
+- **Componentes instalados automáticamente durante build:**
+
+| Componente | Versión |
+|------------|---------|
+| Android SDK Build-Tools | 35.0.0 |
+| Android SDK Platform | 35 (revision 2) |
+| NDK (Side by side) | 26.1.10909125 |
+| CMake | 3.22.1 |
+
+- **APK:** `apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk`
+- **Instalación:** Automática en emulador `Pixel_7_API_34`
+- **Metro Bundler:** Bundle exitoso (724 modules, 15.5s)
+- **Problema conocido:** El emulador muestra "System UI isn't responding" / "Process system isn't responding" por carga del sistema (build + emulador + Metro simultáneamente en la misma máquina). Seleccionar "Wait" resuelve el diálogo. No es un crash de la app — el mapa carga correctamente.
+- **Verificación visual:** Mapa de OpenFreeMap cargado, zona de Ciudad Universitaria visible (Madrid).
+- **Estado:** OK (build exitoso, app funcionando, mapa visible)
+
+### Archivos Generados (No comitear)
+
+El directorio `apps/mobile/android/` fue generado por `expo prebuild` y está en `.gitignore`. No se debe comitear. Se regenera con `npx expo prebuild --platform android --clean`.
+
+### Estado Actualizado de Tareas
+
+| Tarea | Spec IDs | Estado | Progreso | Cambio |
+|-------|----------|--------|----------|--------|
+| **T1.1** Monorepo Setup | FR-001 | **COMPLETADA** | 100% | Sin cambios |
+| **T1.2** Expo + TypeScript | FR-002, NFR-003, NFR-005 | **COMPLETADA** | 100% | ↑ de 40% — App arranca con MapScreen, dev build funciona |
+| **T1.3** MapLibre GL | FR-003, NFR-001, NFR-002 | **COMPLETADA** | 100% | ↑ de 0% — MapView, MapScreen, mapStore, centrado en CU |
+| **T1.4** GPS Location | FR-004, NFR-001, NFR-002 | **NO INICIADA** | 0% | Sin cambios |
+| **T1.5** GeoJSON Data Model | FR-006, NFR-003 | **PARCIAL** | 70% | Sin cambios |
+| **T1.6** Server + Database | FR-007, FR-008, NFR-001, NFR-004 | **CASI COMPLETA** | 90% | Sin cambios |
+| **T1.7** Static Route Display | FR-005, NFR-002 | **NO INICIADA** | 0% | Sin cambios |
+| **T1.8** CI/CD Pipeline | FR-009, NFR-003 | **NO INICIADA** | 0% | Sin cambios |
+
+**Progreso global estimado: ~50-55%** (↑ de ~35-40%)
+
+---
+
+## [2026-03-18] — Estado de Progreso Fase 1 (Sesión 2)
+
+> **Fecha de revisión:** 2026-03-18
+> **Spec de referencia:** `docs/SPEC-FASE-1.md`
+> **Commit base:** `68132ee` (rama `main`)
+> **Sesión:** Segunda sesión de desarrollo
+
+### Resumen de lo Realizado en esta Sesión
+
+1. **T1.3 — MapLibre GL [FR-003]:** Implementado desde cero
+   - `mapStore.ts` (Zustand) con estado del mapa: centro CU, zoom, ruta seleccionada
+   - `MapView.tsx` con MapLibre React Native v10, tiles OpenFreeMap (sin API key)
+   - `MapScreen.tsx` conectada al store, con accesibilidad en español
+
+2. **T1.2 — Expo + TypeScript [FR-002]:** Completado
+   - `App.tsx` refactorizado para renderizar `MapScreen` en vez del placeholder
+   - Entry point cambiado a `./index.js` (compatible con dev build)
+   - `expo-dev-client` instalado para módulos nativos
+   - Build nativo Android exitoso (255 tasks Gradle, ~2m 29s)
+
+3. **Correcciones técnicas:**
+   - CMake PATH_MAX en Windows: resuelto con `node-linker=hoisted` en `.npmrc`
+   - Iconos placeholder generados (1024x1024 azul)
+   - `mapStyle` en vez de `styleURL` (API MapLibre v10)
+
+### Verificación Visual
+
+- **Mapa cargado:** Confirmado visualmente en emulador Pixel_7_API_34
+- **Tile provider:** OpenFreeMap (liberty style) renderizando zona de Madrid / Ciudad Universitaria
+- **Rendimiento emulador:** "System UI isn't responding" es lag del emulador Android, no de la app. Seleccionar "Wait" permite continuar normalmente.
+
+### Progreso Detallado por Tarea
+
+| Tarea | Spec IDs | Estado | Progreso | Detalle |
+|-------|----------|--------|----------|---------|
+| **T1.1** Monorepo Setup | FR-001 | **COMPLETADA** | 100% | Turborepo + pnpm, 3 packages, `.npmrc` con `node-linker=hoisted` |
+| **T1.2** Expo + TypeScript | FR-002, NFR-003, NFR-005 | **COMPLETADA** | 100% | Dev build funciona, app arranca en emulador, TypeScript strict OK |
+| **T1.3** MapLibre GL | FR-003, NFR-001, NFR-002 | **COMPLETADA** | 100% | MapView + MapScreen + mapStore, centrado en CU, tiles OpenFreeMap |
+| **T1.4** GPS Location | FR-004, NFR-001, NFR-002 | **NO INICIADA** | 0% | 5 archivos pendientes |
+| **T1.5** GeoJSON Data Model | FR-006, NFR-003 | **PARCIAL** | 70% | Tipos TS + test-route.geojson OK. Falta: `route.schema.json`, tests validación |
+| **T1.6** Server + Database | FR-007, FR-008, NFR-001, NFR-004 | **CASI COMPLETA** | 90% | 4 endpoints + 4 tests + Prisma. Falta: `geometryGeoJson`, enums spec |
+| **T1.7** Static Route Display | FR-005, NFR-002 | **NO INICIADA** | 0% | 5 archivos pendientes |
+| **T1.8** CI/CD Pipeline | FR-009, NFR-003 | **NO INICIADA** | 0% | 1 archivo pendiente |
+
+### Progreso Global
+
+```
+T1.1 ████████████████████ 100%  ✅
+T1.2 ████████████████████ 100%  ✅
+T1.3 ████████████████████ 100%  ✅
+T1.4 ░░░░░░░░░░░░░░░░░░░░   0%  ⬜
+T1.5 ██████████████░░░░░░  70%  🔶
+T1.6 ██████████████████░░  90%  🔶
+T1.7 ░░░░░░░░░░░░░░░░░░░░   0%  ⬜
+T1.8 ░░░░░░░░░░░░░░░░░░░░   0%  ⬜
+
+Global: ████████████░░░░░░░░ ~50-55%
+```
+
+### Archivos Implementados (Total: 25 archivos de código)
+
+| Archivo | Spec ID | Estado |
+|---------|---------|--------|
+| `package.json` (root) | FR-001 | ✅ |
+| `pnpm-workspace.yaml` | FR-001 | ✅ |
+| `turbo.json` | FR-001 | ✅ |
+| `.gitignore`, `.gitattributes` | FR-001 | ✅ |
+| `.npmrc` | FR-001 | ✅ (hoisted node-linker) |
+| `docker-compose.yml` | FR-008 | ✅ |
+| `apps/mobile/App.tsx` | FR-002 | ✅ (renderiza MapScreen) |
+| `apps/mobile/index.js` | FR-002 | ✅ (entry point) |
+| `apps/mobile/app.json` | FR-002 | ✅ (plugins MapLibre + Location) |
+| `apps/mobile/package.json` | FR-002 | ✅ |
+| `apps/mobile/src/screens/MapScreen.tsx` | FR-003 | ✅ |
+| `apps/mobile/src/components/MapView.tsx` | FR-003 | ✅ |
+| `apps/mobile/src/store/mapStore.ts` | FR-003 | ✅ |
+| `packages/shared-types/src/geojson.ts` | FR-006 | ✅ |
+| `packages/shared-types/src/index.ts` | FR-006 | ✅ |
+| `data/routes/test-route.geojson` | FR-006 | ✅ |
+| `server/src/app.ts` | FR-007 | ✅ |
+| `server/src/index.ts` | FR-007 | ✅ |
+| `server/src/routes/health.ts` | FR-007 | ✅ |
+| `server/src/routes/routes.ts` | FR-007 | ✅ |
+| `server/src/routes/health.test.ts` | FR-007 | ✅ (1 test) |
+| `server/src/routes/routes.test.ts` | FR-007 | ✅ (3 tests) |
+| `server/prisma/schema.prisma` | FR-008 | ✅ |
+| `server/prisma/seed.ts` | FR-008 | ✅ |
+| `server/prisma/migrations/` | FR-008 | ✅ (1 migración) |
+
+### Archivos Pendientes (16 archivos)
+
+| Archivo | Spec ID | Tarea | Prioridad |
+|---------|---------|-------|-----------|
+| `apps/mobile/src/components/UserLocationMarker.tsx` | FR-004 | T1.4 | Media |
+| `apps/mobile/src/components/PermissionRequestModal.tsx` | FR-004 | T1.4 | Media |
+| `apps/mobile/src/services/locationService.ts` | FR-004 | T1.4 | Media |
+| `apps/mobile/src/hooks/useLocation.ts` | FR-004 | T1.4 | Media |
+| `apps/mobile/src/store/locationStore.ts` | FR-004 | T1.4 | Media |
+| `data/schemas/route.schema.json` | FR-006 | T1.5 | Baja |
+| `apps/mobile/src/components/RoutePolyline.tsx` | FR-005 | T1.7 | **Alta** |
+| `apps/mobile/src/components/WaypointMarker.tsx` | FR-005 | T1.7 | **Alta** |
+| `apps/mobile/src/services/routeService.ts` | FR-005 | T1.7 | **Alta** |
+| `apps/mobile/src/services/apiClient.ts` | FR-005 | T1.7 | **Alta** |
+| `apps/mobile/src/hooks/useRoutes.ts` | FR-005 | T1.7 | **Alta** |
+| `apps/mobile/src/hooks/useRoute.ts` | FR-005 | T1.7 | **Alta** |
+| `.github/workflows/ci.yml` | FR-009 | T1.8 | Baja |
+| Tests de validación GeoJSON | FR-006 | T1.5 | Baja |
+| Tests de locationService | FR-004 | T1.4 | Media |
+| Tests de routeService | FR-005 | T1.7 | **Alta** |
+
+### Discrepancias Spec vs Implementación (Sin Resolver)
+
+1. **WaypointType enum:** Spec define `transport_stop`, `hazard`, `rest_area`, `information_point`. Implementado: `BUS_STOP`, `METRO`, `PARKING`, `ACCESSIBILITY_FEATURE`. Requiere decisión de alineación.
+2. **RouteSegment.geometryGeoJson:** Spec requiere campo geoespacial, no implementado aún.
+3. **SurfaceType/RiskLevel:** Spec define como enums, implementado como String/Int.
+
+### Ruta Crítica — Próximos Pasos
+
+El camino más corto para ver **la ruta dibujada sobre el mapa:**
+
+1. **T1.7 — Static Route Display** (prioridad alta)
+   - Crear `apiClient.ts` + `routeService.ts` para conectar con el server
+   - Crear `RoutePolyline.tsx` (LineLayer sobre ShapeSource)
+   - Crear `WaypointMarker.tsx` (CircleLayer + SymbolLayer)
+   - Crear hooks `useRoutes` + `useRoute`
+   - **Resultado:** Ruta Medicina → Metro CU visible como polyline azul con markers
+
+2. **T1.4 — GPS Location** (prioridad media)
+   - `locationService.ts` con expo-location
+   - `UserLocationMarker.tsx` + `PermissionRequestModal.tsx`
+   - **Resultado:** Marker azul del usuario sobre el mapa
+
+3. **T1.5 + T1.6 — Completar** (prioridad baja)
+   - JSON Schema de validación, alinear enums, geometría PostGIS
+
+4. **T1.8 — CI/CD** (prioridad baja)
+   - GitHub Actions workflow
 
 ---
 

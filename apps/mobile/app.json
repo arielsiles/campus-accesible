@@ -25,7 +25,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Esta app necesita acceder a tu ubicación para guiarte por el campus."
         }
-      ]
+      ],
+      "@maplibre/maplibre-react-native"
     ]
   }
 }
