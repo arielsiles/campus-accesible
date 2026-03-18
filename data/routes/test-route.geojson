@@ -1,0 +1,149 @@
+{
+  "type": "FeatureCollection",
+  "properties": {
+    "id": "test-route-1",
+    "name": "Medicina → Metro Ciudad Universitaria",
+    "description": "Ruta accesible desde la Facultad de Medicina hasta la estación de Metro Ciudad Universitaria"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-3.7267, 40.4489]
+      },
+      "properties": {
+        "featureType": "waypoint",
+        "waypointId": "wp-medicina",
+        "name": "Facultad de Medicina",
+        "description": "Entrada principal de la Facultad de Medicina (UCM)",
+        "waypointType": "BUILDING",
+        "order": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-3.7258, 40.4479]
+      },
+      "properties": {
+        "featureType": "waypoint",
+        "waypointId": "wp-odontologia",
+        "name": "Facultad de Odontología",
+        "description": "Cruce frente a la Facultad de Odontología",
+        "waypointType": "INTERSECTION",
+        "order": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-3.7271, 40.4471]
+      },
+      "properties": {
+        "featureType": "waypoint",
+        "waypointId": "wp-farmacia",
+        "name": "Facultad de Farmacia",
+        "description": "Entrada lateral de la Facultad de Farmacia",
+        "waypointType": "BUILDING",
+        "order": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-3.7275, 40.4465]
+      },
+      "properties": {
+        "featureType": "waypoint",
+        "waypointId": "wp-bus-farmacia",
+        "name": "Parada de bus Farmacia",
+        "description": "Parada de autobús frente a Farmacia, líneas G y U",
+        "waypointType": "BUS_STOP",
+        "order": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-3.7302, 40.4449]
+      },
+      "properties": {
+        "featureType": "waypoint",
+        "waypointId": "wp-metro-cu",
+        "name": "Metro Ciudad Universitaria",
+        "description": "Estación de Metro Ciudad Universitaria, línea 6 (circular)",
+        "waypointType": "METRO",
+        "order": 4
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[-3.7267, 40.4489], [-3.7258, 40.4479]]
+      },
+      "properties": {
+        "featureType": "route-segment",
+        "segmentId": "seg-medicina-odonto",
+        "name": "Medicina a Odontología",
+        "surfaceType": "paved",
+        "elevationChange": -1.2,
+        "riskLevel": 0,
+        "order": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[-3.7258, 40.4479], [-3.7271, 40.4471]]
+      },
+      "properties": {
+        "featureType": "route-segment",
+        "segmentId": "seg-odonto-farmacia",
+        "name": "Odontología a Farmacia",
+        "surfaceType": "paved",
+        "elevationChange": -0.5,
+        "riskLevel": 0,
+        "order": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[-3.7271, 40.4471], [-3.7275, 40.4465]]
+      },
+      "properties": {
+        "featureType": "route-segment",
+        "segmentId": "seg-farmacia-bus",
+        "name": "Farmacia a parada de bus",
+        "surfaceType": "paved",
+        "elevationChange": 0,
+        "riskLevel": 0,
+        "order": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[-3.7275, 40.4465], [-3.7302, 40.4449]]
+      },
+      "properties": {
+        "featureType": "route-segment",
+        "segmentId": "seg-bus-metro",
+        "name": "Parada de bus a Metro",
+        "surfaceType": "paved",
+        "elevationChange": -2.3,
+        "riskLevel": 1,
+        "order": 3
+      }
+    }
+  ]
+}

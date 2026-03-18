@@ -1,0 +1,436 @@
+
+PLAN DE DESARROLLO
+Aplicación de Guiado GPS Accesible
+para Ciudad Universitaria
+
+Desarrollo Completo con Inteligencia Artificial y Agentes Claude
+Marzo 2026
+
+TABLA DE CONTENIDOS
+1. Análisis del Proyecto
+2. Estructura de Archivos y Carpetas
+3. Fases de Desarrollo
+4. Stack Tecnológico Recomendado
+5. Herramientas de Desarrollo con IA
+6. Proyectos Open Source de Referencia
+7. Estrategias de Desarrollo Basadas en Open Source
+8. Roadmap y Estimaciones
+
+1. ANÁLISIS DEL PROYECTO
+1.1 Resumen Funcional
+La aplicación es un sistema de navegación GPS accesible para Ciudad Universitaria, diseñado principalmente para personas con discapacidad visual, movilidad reducida, diversidad intelectual y personas sordas, aunque también está abierto a cualquier usuario del campus.
+Funcionalidades Clave Identificadas
+Navegación GPS de alta precisión: Submétrica (< 1 metro), con trazados topográficos pregrabados.
+Audio 3D espacializado: Sonido que cambia de dirección para guiar al usuario (modelo tipo Soundscape).
+Audio-descripciones accesibles: Información contextual del recorrido (obstáculos, desniveles, cruces, firme irregular).
+Múltiples perfiles de accesibilidad: Visual, movilidad reducida, diversidad intelectual, personas sordas.
+Sistema de rutas tipo «metro en superficie»: Cualquier punto puede ser origen o destino, conexión con transporte público.
+Niveles de riesgo: Evaluación y advertencia de riesgos en el recorrido (medio, alto, intolerable).
+Retroalimentación háptica: Vibración para usuarios sordos.
+Lectura fácil: Lenguaje simplificado para personas con diversidad intelectual.
+Herramienta colaborativa: Reporte de incidencias por usuarios.
+Escalabilidad: Posibilidad de añadir nuevas rutas y actualizar las existentes.
+1.2 Desafíos Técnicos Principales
+Desafío
+Descripción
+Precisión GPS
+GPS estándar tiene ~3-5m de error. Se necesita RTK-GPS o mapas topográficos pregrabados con waypoints de alta precisión.
+Audio 3D
+Implementar HRTF (Head-Related Transfer Function) para audio espacializado requiere procesamiento en tiempo real.
+Perfiles múltiples
+Cada tipo de discapacidad requiere una UX completamente diferente: audio, háptica, lectura fácil.
+Rutas no lineales
+El sistema de grafo donde cualquier nodo es origen/destino necesita un motor de routing flexible.
+Datos topográficos
+Requiere levantamiento de campo con equipo topográfico para precisión submétrica.
+
+2. ESTRUCTURA DE ARCHIVOS Y CARPETAS
+La estructura sigue el patrón de un monorepo con separación clara entre app móvil, backend, datos topográficos y herramientas de IA. Esta arquitectura está optimizada para desarrollo asistido por agentes de IA (Claude Code).
+2.1 Estructura General del Monorepo
+campus-guiado-gps/
+├── apps/
+│   ├── mobile/                    # App React Native (Expo)
+│   │   ├── src/
+│   │   │   ├── components/        # Componentes UI reutilizables
+│   │   │   ├── screens/           # Pantallas principales
+│   │   │   ├── navigation/        # Configuración de rutas de navegación
+│   │   │   ├── services/          # Lógica de negocio (GPS, audio, routing)
+│   │   │   ├── hooks/             # Custom hooks
+│   │   │   ├── store/             # Estado global (Zustand)
+│   │   │   ├── accessibility/     # Módulos de accesibilidad por perfil
+│   │   │   ├── audio/             # Motor de audio 3D espacializado
+│   │   │   ├── haptics/           # Retroalimentación háptica
+│   │   │   ├── i18n/              # Internacionalización y lectura fácil
+│   │   │   └── utils/             # Utilidades generales
+│   │   ├── assets/                # Imágenes, sonidos, fuentes
+│   │   ├── app.json
+│   │   └── package.json
+│   └── admin-web/                 # Panel admin (Next.js)
+│       ├── src/
+│       └── package.json
+├── packages/
+│   ├── routing-engine/            # Motor de cálculo de rutas
+│   ├── map-data-processor/        # Procesamiento de datos topográficos
+│   ├── accessibility-profiles/    # Perfiles de accesibilidad compartidos
+│   └── shared-types/              # Tipos TypeScript compartidos
+├── server/
+│   ├── src/
+│   │   ├── api/               # Endpoints REST/GraphQL
+│   │   ├── routes/            # Datos y lógica de rutas
+│   │   ├── incidents/         # Sistema de incidencias colaborativo
+│   │   ├── auth/              # Autenticación
+│   │   └── ai/                # Agentes IA para procesamiento
+│   ├── prisma/                    # Schema de base de datos
+│   └── package.json
+├── data/
+│   ├── topographic/               # Datos topográficos (GeoJSON, GPX)
+│   ├── routes/                    # Definiciones de rutas
+│   ├── poi/                       # Puntos de interés
+│   ├── accessibility-annotations/ # Anotaciones de accesibilidad
+│   └── audio-descriptions/        # Textos de audio-descripciones
+├── ai-agents/
+│   ├── route-optimizer/           # Agente optimizador de rutas
+│   ├── description-generator/     # Generador IA de audio-descripciones
+│   ├── easy-read-adapter/         # Adaptador a lectura fácil
+│   └── incident-validator/        # Validador de incidencias reportadas
+├── docs/                          # Documentación del proyecto
+├── tests/                         # Tests e2e y de integración
+├── .claude/                       # Configuración de Claude Code
+│   ├── settings.json
+│   └── CLAUDE.md                  # Instrucciones para el agente
+├── turbo.json                     # Configuración Turborepo
+└── package.json                   # Raíz del monorepo
+2.2 Justificación de la Estructura
+Monorepo con Turborepo: Permite que Claude Code trabaje en cualquier parte del proyecto con contexto completo. Facilita compartir tipos y lógica entre app móvil, servidor y herramientas.
+Separación data/: Los datos topográficos y de rutas son independientes del código. Los agentes IA pueden generar y validar estos datos sin tocar la app.
+Carpeta ai-agents/: Agentes especializados para tareas específicas: generar descripciones, adaptar a lectura fácil, validar incidencias reportadas.
+Carpeta .claude/: CLAUDE.md contiene instrucciones persistentes para que Claude Code entienda el contexto del proyecto en cada sesión.
+
+3. FASES DE DESARROLLO
+El desarrollo se estructura en 6 fases progresivas. Cada fase produce un entregable funcional y testeable. Los agentes de IA (Claude Code) participan activamente en cada fase.
+Fase 1: Fundación y Prototipo Básico (Semanas 1–4)
+Objetivo: App funcional mínima con mapa y GPS básico.
+Tareas
+Inicializar monorepo con Turborepo + pnpm
+Configurar Expo (React Native) con TypeScript
+Integrar MapLibre GL (open source) como motor de mapas
+Implementar geolocalización GPS nativa con expo-location
+Crear modelo de datos GeoJSON para rutas del campus
+Configurar servidor básico con Hono + Prisma + PostgreSQL/PostGIS
+Implementar primera ruta de prueba con waypoints estáticos
+Configurar CI/CD básico con GitHub Actions
+Rol de la IA en esta fase
+Claude Code genera el scaffolding completo del proyecto.
+Genera los esquemas Prisma y los tipos TypeScript compartidos.
+Escribe los tests unitarios de cada módulo.
+Entregable: App que muestra un mapa con una ruta y la posición GPS del usuario.
+Fase 2: Motor de Navegación y Routing (Semanas 5–8)
+Objetivo: Navegación punto-a-punto funcional con instrucciones básicas.
+Tareas
+Implementar grafo de rutas (nodos = puntos clave, aristas = segmentos)
+Desarrollar algoritmo de pathfinding (Dijkstra/A*) adaptado a accesibilidad
+Sistema de "snap-to-route" para mantener al usuario en la ruta incluso con desviaciones
+Instrucciones turn-by-turn básicas (texto)
+Conexión con puntos de transporte (Metro, autobuses, intercambiador)
+Búsqueda de destinos (facultades, edificios, paradas)
+Rol de la IA en esta fase
+Claude Code implementa el algoritmo de routing con pesos por accesibilidad.
+Genera las instrucciones de navegación en lenguaje natural.
+Ayuda a diseñar el modelo de datos del grafo para escalabilidad.
+Entregable: Navegación funcional de cualquier punto A a punto B dentro del campus.
+Fase 3: Accesibilidad Visual y Audio 3D (Semanas 9–14)
+Objetivo: Experiencia de navegación completa para personas con discapacidad visual.
+Tareas
+Implementar audio espacializado 3D con HRTF (usando expo-av o nativo)
+Sistema de audio-descripciones contextuales (obstáculos, desniveles, cruces)
+Integración completa con VoiceOver (iOS) y TalkBack (Android)
+Evaluación y clasificación de riesgos por segmento de ruta
+Perfil de usuario para discapacidad visual con preferencias configurables
+Compatibilidad con auriculares de conducción ósea
+Agente IA para generación automática de audio-descripciones a partir de datos topográficos
+Referencia clave: Microsoft Soundscape
+El código fuente de Microsoft Soundscape (disponible en GitHub bajo licencia MIT) es la referencia principal para la implementación de audio 3D espacializado. El proyecto comunitario soundscape-community/soundscape continúa desarrollando esta tecnología.
+Entregable: Navegación funcional completa para usuarios con discapacidad visual.
+Fase 4: Perfiles Adicionales de Accesibilidad (Semanas 15–20)
+Objetivo: Soporte para movilidad reducida, diversidad intelectual y personas sordas.
+Tareas
+Perfil de movilidad reducida: valoración de accesibilidad (pendientes, pasos adaptados, tipo de firme)
+Perfil de diversidad intelectual: lectura fácil con agente IA que simplifica el lenguaje
+Perfil de personas sordas: sistema de vibración háptica direccional
+Selector de perfil en onboarding y configuración
+Tests de usabilidad con usuarios reales de cada perfil
+Rol de la IA en esta fase
+Agente Claude especializado en adaptar textos a lectura fácil (siguiendo guías de Plena Inclusión).
+Generación de patrones hápticos optimizados con IA.
+Entregable: App con 4 perfiles de accesibilidad funcionales.
+Fase 5: Sistema Colaborativo e Incidencias (Semanas 21–24)
+Objetivo: Los usuarios pueden reportar y consultar incidencias en las rutas.
+Tareas
+Sistema de reporte de incidencias (obras, obstáculos temporales)
+Agente IA validador de incidencias (filtra información no veraz)
+Panel de administración web (Next.js) para gestionar rutas e incidencias
+Sistema de actualización de rutas (al menos anual, según el documento)
+Notificaciones push para incidencias en rutas habituales
+Entregable: Sistema colaborativo funcional con moderación por IA.
+Fase 6: Optimización, Escalabilidad y Lanzamiento (Semanas 25–30)
+Objetivo: Preparar la app para producción y facilitar la expansión a otros campus.
+Tareas
+Optimización de rendimiento (battery, GPS, audio)
+Tests de accesibilidad automatizados con React Native AMA
+Documentación completa para añadir nuevas rutas
+Sistema de exportación/importación de campus (para replicar en otras universidades)
+Publicación en App Store y Google Play
+Auditoría de accesibilidad WCAG 2.1 AA
+Entregable: Versión 1.0 publicada en tiendas.
+
+4. STACK TECNOLÓGICO RECOMENDADO
+La selección prioriza tecnologías open source, con buen soporte de accesibilidad y compatibles con desarrollo asistido por IA.
+4.1 Frontend Móvil
+Componente
+Tecnología
+Justificación
+Framework
+React Native + Expo SDK 52+
+Cross-platform, excelente soporte de accesibilidad, Claude lo domina
+Lenguaje
+TypeScript
+Tipado fuerte facilita la generación de código por IA
+Mapas
+MapLibre GL Native
+Fork open source de Mapbox GL. Soporte de tiles vectoriales, estilos custom
+Estado
+Zustand
+Ligero, simple, compatible con TypeScript
+Audio 3D
+expo-av + nativo (HRTF)
+Para audio espacializado. Referencia: Soundscape
+Accesibilidad
+React Native AMA
+Toolkit que enforza accesibilidad en desarrollo
+GPS
+expo-location
+API unificada iOS/Android con alta precisión
+Navegación
+React Navigation 7+
+Accesible por defecto, soporte de deep linking
+Háptica
+expo-haptics
+Control fino de vibración, necesario para perfil sordo
+4.2 Backend
+Componente
+Tecnología
+Justificación
+Runtime
+Node.js / Bun
+JavaScript/TypeScript end-to-end
+Framework
+Hono
+Ultraligero, edge-ready, TypeScript nativo
+ORM
+Prisma
+Type-safe, migraciones, soporte PostGIS
+Base de Datos
+PostgreSQL + PostGIS
+Extensión geoespacial esencial para routing
+Hosting
+Railway / Fly.io / VPS
+Opciones asequibles con PostgreSQL incluido
+IA Backend
+Anthropic Claude API
+Para agentes de generación de descripciones y validación
+Geoespacial
+Turf.js + OSRM
+Cálculos geoespaciales y routing open source
+4.3 Datos Geoespaciales
+Componente
+Tecnología
+Justificación
+Mapas base
+OpenStreetMap
+Datos abiertos, comunidad activa, editable
+Tiles
+Protomaps / MapTiler (free tier)
+Tiles vectoriales autohosteables
+Formato rutas
+GeoJSON + GPX
+Estándares abiertos, interoperables
+Geocoding
+Nominatim / Photon
+Geocodificación open source basada en OSM
+Routing
+OSRM / Valhalla
+Motores de routing open source con perfiles personalizables
+
+5. HERRAMIENTAS DE DESARROLLO CON IA
+El desarrollo se basa en un flujo donde la IA genera, revisa y prueba código. Estas son las herramientas recomendadas:
+5.1 Herramientas Principales
+Herramienta
+Uso
+Detalles
+Claude Code
+Agente de desarrollo principal
+Línea de comandos. Genera código, ejecuta tests, hace commits. Ideal para este proyecto.
+Claude.ai Pro
+Diseño y planificación
+Para arquitectura, revisión de código, documentación. Interfaz conversacional.
+Cursor / Windsurf
+IDE con IA integrada
+Alternativa visual a Claude Code. Autocomplete y chat en el editor.
+GitHub Copilot
+Autocompletado en VS Code
+Complementario para sugerencias inline.
+Expo
+Build y preview
+EAS Build para compilar, Expo Go para preview rápido.
+Git + GitHub
+Control de versiones
+Claude Code hace commits automáticos con mensajes descriptivos.
+Vitest
+Testing
+Framework de tests rápido, compatible con TypeScript.
+Detox
+Tests E2E móvil
+Tests de accesibilidad automatizados en iOS y Android.
+5.2 Flujo de Trabajo Recomendado con Claude Code
+Escribir el archivo CLAUDE.md con el contexto completo del proyecto (qué es, qué tecnologías usa, convenciones de código).
+Para cada feature: describir en lenguaje natural lo que necesitas. Claude Code genera el código, los tests y la documentación.
+Revisar el código generado, pedir ajustes si es necesario.
+Claude Code ejecuta los tests automáticamente y corrige errores.
+Commit y PR automático. Tú revisas y apruebas.
+Este flujo permite que un ingeniero de software gestionando el proyecto pueda producir resultados equivalentes a un equipo pequeño, delegando la implementación a los agentes de IA.
+
+6. PROYECTOS OPEN SOURCE DE REFERENCIA
+Estos proyectos representan las referencias más relevantes para este desarrollo, tanto por su funcionalidad como por su código fuente disponible.
+6.1 Microsoft Soundscape (Referencia Principal)
+Atributo
+Detalle
+GitHub
+microsoft/soundscape + soundscape-community/soundscape
+Licencia
+MIT
+Plataforma
+iOS (Swift) - La comunidad trabaja en portar a más plataformas
+Relevancia
+Audio 3D espacializado con HRTF, rutas guiadas, integración con OSM, audio beacons. Es la implementación más madura de navegación por audio para personas ciegas.
+Qué aprovechar
+Algoritmos de audio espacializado, lógica de audio beacons, herramienta de autoría de rutas guiadas, arquitectura de servicios de localización.
+6.2 OsmAnd
+Atributo
+Detalle
+GitHub
+osmandapp/OsmAnd
+Licencia
+GPL v3
+Plataforma
+Android (Java/Kotlin) + iOS
+Relevancia
+Navegación offline completa con OSM. Motor de routing maduro con perfiles de vehículos y peatones. Soporte de GPX tracks.
+Qué aprovechar
+Motor de routing offline, sistema de perfiles personalizables, gestión de datos OSM, TTS para navegación.
+6.3 Otros Proyectos Relevantes
+Proyecto
+Licencia
+Plataforma
+Relevancia
+OpenIndoorMaps
+Open Source
+Web (OSM-based)
+Navegación indoor/outdoor con OSM, admin panel
+Organic Maps
+Apache 2.0
+iOS + Android
+Navegación offline minimalista, código limpio
+OSRM
+BSD 2-Clause
+Servidor
+Motor de routing rápido, perfiles custom
+Valhalla
+MIT
+Servidor
+Routing con soporte de accesibilidad y multimodal
+Blind-Nav
+Open Source
+Android (Kotlin)
+Navegación para ciegos con Gemini AI
+React Native AMA
+MIT
+React Native
+Toolkit de accesibilidad para RN
+SightWalk
+Open Source
+Python/ML
+Detección de obstáculos con CNN para ciegos
+APH Beacon Project
+Open Source
+iOS
+Beacons BT para nav. indoor de ciegos + OSM
+6.4 Aplicaciones Comerciales de Referencia (No Open Source)
+BlindSquare: La app GPS más usada por personas ciegas. Usa Foursquare + OSM. Referencia para UX de accesibilidad.
+Lazarillo: App gratuita con exploración de entorno y navegación. Muy popular en Latinoamérica.
+Seeing Eye GPS: Navegación turn-by-turn diseñada para bastón y perro guía.
+ViaOpta Nav: De Novartis. Incluye información de accesibilidad en intersecciones.
+
+7. ESTRATEGIAS DE DESARROLLO BASADAS EN OPEN SOURCE
+Existen varias estrategias para aprovechar proyectos open source existentes como base del desarrollo. A continuación se analiza la opción viable:
+Estrategia C: Desarrollo Nuevo con Componentes Open Source (Alternativa Recomendada)
+Aspecto
+Detalle
+Base
+React Native + Expo + MapLibre + OSRM/Valhalla (todo MIT/BSD)
+Ventajas
+Arquitectura limpia, TypeScript end-to-end, cross-platform desde día 1, fácil de mantener, ideal para desarrollo con IA
+Desventajas
+Audio 3D debe implementarse desde cero o portarse de Soundscape. Más tiempo inicial.
+Enfoque
+Construir la app con React Native, usar OSRM para routing, integrar audio 3D portándolo de Soundscape como módulo nativo.
+Esfuerzo
+Medio. Con Claude Code, el scaffolding y la mayoría del código se generan rápidamente.
+7.1 Recomendación Final
+La recomendación es la Estrategia C (Desarrollo nuevo con componentes open source), combinada con elementos de la Estrategia A (extraer audio 3D de Soundscape):
+Arquitectura nueva en React Native + Expo + TypeScript para máxima compatibilidad con desarrollo por IA.
+MapLibre GL como motor de mapas (open source, tiles vectoriales).
+OSRM o Valhalla para routing con perfiles de accesibilidad custom.
+Portar la lógica de audio 3D de Soundscape como módulo nativo.
+Claude API para agentes de generación de descripciones y lectura fácil.
+OpenStreetMap como base de datos geográfica.
+Esta combinación ofrece el mejor balance entre: licencias permisivas (MIT/BSD), compatibilidad con IA para desarrollo, cross-platform desde el día uno, y reutilización de lo más difícil de implementar (audio 3D).
+
+8. ROADMAP Y ESTIMACIONES
+Fase
+Descripción
+Duración
+Prioridad
+Fase 1
+Fundación y prototipo básico
+4 semanas
+Crítica
+Fase 2
+Motor de navegación y routing
+4 semanas
+Crítica
+Fase 3
+Accesibilidad visual y audio 3D
+6 semanas
+Crítica
+Fase 4
+Perfiles adicionales de accesibilidad
+6 semanas
+Alta
+Fase 5
+Sistema colaborativo e incidencias
+4 semanas
+Media
+Fase 6
+Optimización y lanzamiento
+6 semanas
+Alta
+
+Tiempo total estimado: 30 semanas (~7.5 meses) con un desarrollador + agentes IA.
+Con un equipo de 2–3 personas + IA, se puede reducir a 4–5 meses.
+Consideraciones Importantes
+Levantamiento topográfico: Es trabajo de campo que no puede hacer la IA. Necesita equipo topográfico profesional y tiempo dedicado. Se puede paralelizar con el desarrollo.
+Tests con usuarios reales: Indispensable. Cada fase debe incluir pruebas con personas de los perfiles objetivo, especialmente fase 3 y 4.
+Sostenibilidad: El documento enfatiza actualizaciones anuales mínimas. Diseñar desde el inicio un sistema de mantenimiento de datos.
+Regulaciones: Verificar cumplimiento de la normativa española/europea de accesibilidad digital (EN 301 549).
+
+Documento generado con asistencia de IA — Claude (Anthropic)

@@ -1,0 +1,33 @@
+{
+  "name": "@campus-gps/server",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@campus-gps/shared-types": "workspace:*",
+    "@hono/node-server": "^1.19.11",
+    "@prisma/client": "^6",
+    "hono": "^4",
+    "zod": "^3"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "prisma": "^6",
+    "tsx": "^4",
+    "typescript": "^5.4",
+    "vitest": "^2"
+  }
+}

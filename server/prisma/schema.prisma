@@ -1,0 +1,75 @@
+// FR-008: Database Schema
+// Prisma schema for campus GPS routes with PostGIS geospatial support
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis]
+}
+
+/// Campus route connecting two points of interest
+model Route {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  waypoints Waypoint[]
+  segments  RouteSegment[]
+
+  @@map("routes")
+}
+
+/// Point of interest along a route
+model Waypoint {
+  id           String       @id @default(cuid())
+  waypointId   String       @unique @map("waypoint_id")
+  name         String
+  description  String
+  waypointType WaypointType @map("waypoint_type")
+  latitude     Float
+  longitude    Float
+  order        Int
+
+  routeId String @map("route_id")
+  route   Route  @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+  @@map("waypoints")
+}
+
+/// Segment of a route between two waypoints
+model RouteSegment {
+  id              String  @id @default(cuid())
+  segmentId       String  @unique @map("segment_id")
+  name            String
+  surfaceType     String  @map("surface_type")
+  elevationChange Float   @default(0) @map("elevation_change")
+  riskLevel       Int     @default(0) @map("risk_level")
+  order           Int
+  // PostGIS geometry stored as raw SQL — managed via raw queries
+  // Prisma does not natively support geometry columns
+
+  routeId String @map("route_id")
+  route   Route  @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+  @@map("route_segments")
+}
+
+enum WaypointType {
+  BUILDING
+  ENTRANCE
+  INTERSECTION
+  BUS_STOP
+  METRO
+  LANDMARK
+  PARKING
+  ACCESSIBILITY_FEATURE
+
+  @@map("waypoint_type")
+}
