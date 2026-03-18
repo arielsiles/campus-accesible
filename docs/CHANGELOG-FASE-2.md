@@ -1,7 +1,7 @@
 # Historial de Cambios — Fase 2: Motor de Navegación y Routing
 
 > Registro cronológico de implementación y cambios durante la Fase 2 del proyecto **Campus GPS Accesible**.
-> **Estado:** 🔨 En progreso
+> **Estado:** ✅ Completada
 > **Spec:** `docs/SPEC-FASE-2.md`
 
 ---
@@ -25,9 +25,9 @@
 | T2.5 — Transport Connections | FR-205 | ✅ Completada | ██████████ 100% |
 | T2.6 — Destination Search | FR-206 | ✅ Completada | ██████████ 100% |
 | T2.7 — Route Calculation API | FR-207 | ✅ Completada | ██████████ 100% |
-| T2.8 — Navigation Screen | FR-208 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
+| T2.8 — Navigation Screen | FR-208 | ✅ Completada | ██████████ 100% |
 
-**Progreso global Fase 2:** ███████░░░ 87.5% (7/8 tareas)
+**Progreso global Fase 2:** ██████████ 100% (8/8 tareas) ✅
 
 ---
 
@@ -141,6 +141,30 @@
 - **Parámetros NFR-203:**
   - Trigger instrucción: ≤ 15m del waypoint
   - Detección llegada: ≤ 10m del destino final
+
+### T2.8 — Navigation Screen `Implementación`
+
+- **Commit:** `3e3771e`
+- **Spec ID:** FR-208, NFR-202
+- **Archivos creados/modificados:**
+  - `apps/mobile/src/screens/NavigationScreen.tsx` — Pantalla de navegación activa: mapa + ruta + instrucciones + progreso + alertas
+  - `apps/mobile/src/components/NavigationControls.tsx` — Botón "Cancelar" con diálogo de confirmación
+  - `apps/mobile/src/components/ProgressBar.tsx` — Barra de progreso con `accessibilityRole="progressbar"`
+  - `apps/mobile/src/components/OffRouteAlert.tsx` — Alerta "Fuera de ruta" con `accessibilityLiveRegion="assertive"`
+  - `apps/mobile/src/components/GpsLostAlert.tsx` — Alerta "Señal GPS perdida" tras >10 segundos sin señal
+  - `apps/mobile/src/services/routeCalculationService.ts` — Cliente para `POST /api/routes/calculate`
+  - `apps/mobile/src/screens/MapScreen.tsx` — Tarjeta de destino con botón "Navegar", transición a NavigationScreen
+- **Tests:** Manual (navegación completa en emulador)
+- **Funcionalidades:**
+  - Mapa con ruta resaltada, waypoints y posición del usuario
+  - Banner de instrucción actual (InstructionBanner) en overlay superior
+  - Barra de progreso 0-100% en overlay inferior
+  - Alerta off-route cuando GPS > 30m de la ruta (vía snap-to-route)
+  - Alerta GPS perdida cuando sin señal > 10 segundos
+  - Diálogo de confirmación al cancelar navegación
+  - Modal de llegada "¡Has llegado!" al alcanzar destino
+  - Flujo completo: buscar → seleccionar destino → calcular ruta → navegar
+- **A11y:** Labels en español, roles alert/progressbar/button, assertive live regions, touch targets ≥ 48dp
 
 ---
 
