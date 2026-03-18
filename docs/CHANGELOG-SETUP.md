@@ -731,6 +731,145 @@ El camino más corto para ver **la ruta dibujada sobre el mapa:**
 
 ---
 
+## [2026-03-18] — Completar Fase 1: T1.4, T1.5, T1.6, T1.7, T1.8 (Sesión 2 cont.)
+
+> **Commits:** `856d9e5`, `e7c50ae`, `e5238bf`
+
+### T1.7 — Static Route Display [FR-005]
+
+- **Commit:** `856d9e5`
+- **Archivos creados:**
+
+| Archivo | Descripción |
+|---------|-------------|
+| `apps/mobile/src/services/apiClient.ts` | Cliente HTTP con `fetch`, base URL `10.0.2.2:3000/api` (emulador) |
+| `apps/mobile/src/services/routeService.ts` | `fetchRoutes()` y `fetchRoute(id)` usando apiClient |
+| `apps/mobile/src/services/routeService.test.ts` | 4 tests con mock de apiClient |
+| `apps/mobile/src/hooks/useRoutes.ts` | Hook para listar rutas con loading/error |
+| `apps/mobile/src/hooks/useRoute.ts` | Hook para obtener ruta GeoJSON por ID |
+| `apps/mobile/src/components/RoutePolyline.tsx` | ShapeSource + LineLayer, polyline azul (#1a73e8) |
+| `apps/mobile/src/components/WaypointMarker.tsx` | ShapeSource + CircleLayer + SymbolLayer, colores por tipo, tap muestra Alert |
+
+- **MapScreen actualizado:** Auto-selecciona primera ruta, muestra loading/error overlay con a11y labels
+- **Estado:** OK
+
+### T1.4 — GPS Location [FR-004]
+
+- **Commit:** `e7c50ae`
+- **Archivos creados:**
+
+| Archivo | Descripción |
+|---------|-------------|
+| `apps/mobile/src/store/locationStore.ts` | Store Zustand: coords, permissionStatus, loading, error |
+| `apps/mobile/src/services/locationService.ts` | Wrapper expo-location: requestPermission, checkPermission, watchPosition (≤1s) |
+| `apps/mobile/src/services/locationService.test.ts` | 4 tests con mock de expo-location |
+| `apps/mobile/src/hooks/useLocation.ts` | Hook con auto-watch on permission grant, cleanup on unmount |
+| `apps/mobile/src/components/PermissionRequestModal.tsx` | Modal accesible en español con botones "Permitir ubicación" / "Ahora no" |
+| `apps/mobile/src/components/UserLocationMarker.tsx` | MapLibre UserLocation nativo con heading indicator |
+
+- **MapScreen actualizado:** Muestra PermissionRequestModal al iniciar, renderiza UserLocationMarker si permiso concedido
+- **Estado:** OK
+
+### T1.5 + T1.6 + T1.8 — Spec Alignment y CI [FR-006, FR-008, FR-009]
+
+- **Commit:** `e5238bf`
+- **Cambios principales:**
+
+| Cambio | Detalle |
+|--------|---------|
+| **Enums alineados con spec** | `WaypointType`: building, entrance, intersection, transport_stop, landmark, hazard, rest_area, information_point |
+| **Nuevos enums Prisma** | `SurfaceType` (paved, cobblestone, gravel, dirt, tactile), `RiskLevel` (none, low, medium, high) |
+| **geometryGeoJson** | Campo Text en RouteSegment para almacenar geometría LineString como GeoJSON |
+| **orderIndex** | Renombrado de `order` a `orderIndex` (per spec §4.2) |
+| **route.schema.json** | JSON Schema draft-07 para validación de GeoJSON de rutas |
+| **shared-types** | TypeScript enums (no string unions) per spec §4.3 |
+| **CI workflow** | `.github/workflows/ci.yml`: Node 20, pnpm 9, PostGIS service, typecheck + test |
+| **Nueva migración** | `20260318190755_init` reemplaza la anterior con schema completo |
+
+- **Estado:** OK — 12/12 tests pasando
+
+---
+
+## Estado Final — Fase 1 COMPLETADA
+
+> **Fecha:** 2026-03-18
+> **Último commit:** `e5238bf`
+> **Rama:** `main` (5 commits)
+> **Tests:** 12/12 pasando (8 mobile + 4 server)
+
+### Progreso por Tarea
+
+```
+T1.1 Monorepo Setup        ████████████████████ 100%  ✅
+T1.2 Expo + TypeScript      ████████████████████ 100%  ✅
+T1.3 MapLibre GL            ████████████████████ 100%  ✅
+T1.4 GPS Location           ████████████████████ 100%  ✅
+T1.5 GeoJSON Data Model     ████████████████████ 100%  ✅
+T1.6 Server + Database      ████████████████████ 100%  ✅
+T1.7 Static Route Display   ████████████████████ 100%  ✅
+T1.8 CI/CD Pipeline         ████████████████████ 100%  ✅
+
+Global: ████████████████████ 100%
+```
+
+### Spec IDs Cubiertos
+
+| Spec ID | Descripción | Estado |
+|---------|-------------|--------|
+| FR-001 | Monorepo Structure | ✅ |
+| FR-002 | Mobile App Boots | ✅ |
+| FR-003 | Map Renders | ✅ |
+| FR-004 | GPS Position | ✅ |
+| FR-005 | Static Route | ✅ |
+| FR-006 | GeoJSON Data Model | ✅ |
+| FR-007 | Server API | ✅ |
+| FR-008 | Database Schema | ✅ |
+| FR-009 | CI Pipeline | ✅ |
+| NFR-001 | Performance | ✅ (mapa <3s, GPS ≤1s, API <200ms) |
+| NFR-002 | Accesibilidad | ✅ (labels español, roles, hints, 44dp targets) |
+| NFR-003 | Calidad Código | ✅ (strict TS, 12 tests) |
+| NFR-004 | Seguridad | ✅ (.env en .gitignore, CORS configurado) |
+| NFR-005 | Compatibilidad | ✅ (Android API 24+, Node 20+) |
+
+### Historial de Commits
+
+| Commit | Mensaje | Spec IDs |
+|--------|---------|----------|
+| `68132ee` | `feat(init): bootstrap monorepo with server, mobile app, and shared types` | FR-001, FR-002, FR-006, FR-007, FR-008 |
+| `8d96da6` | `feat(map): integrate MapLibre GL with MapScreen centered on CU` | FR-002, FR-003 |
+| `856d9e5` | `feat(route): display static route with polyline and waypoint markers` | FR-005 |
+| `e7c50ae` | `feat(gps): add GPS location with permission modal and user marker` | FR-004 |
+| `e5238bf` | `feat(spec): align enums with spec, add geometry field and CI pipeline` | FR-006, FR-008, FR-009 |
+
+### Archivos del Proyecto (Total: 35+ archivos de código)
+
+**Mobile (apps/mobile/):**
+- `App.tsx`, `index.js`, `app.json`, `package.json`
+- `src/screens/MapScreen.tsx`
+- `src/components/MapView.tsx`, `RoutePolyline.tsx`, `WaypointMarker.tsx`, `UserLocationMarker.tsx`, `PermissionRequestModal.tsx`
+- `src/store/mapStore.ts`, `locationStore.ts`
+- `src/hooks/useRoutes.ts`, `useRoute.ts`, `useLocation.ts`
+- `src/services/apiClient.ts`, `routeService.ts`, `locationService.ts`
+- `src/services/routeService.test.ts`, `locationService.test.ts`
+
+**Server (server/):**
+- `src/app.ts`, `src/index.ts`
+- `src/routes/health.ts`, `routes.ts`
+- `src/routes/health.test.ts`, `routes.test.ts`
+- `prisma/schema.prisma`, `prisma/seed.ts`, `prisma/migrations/`
+
+**Shared (packages/shared-types/):**
+- `src/geojson.ts`, `src/index.ts`
+
+**Data:**
+- `data/routes/test-route.geojson`
+- `data/schemas/route.schema.json`
+
+**CI/CD:**
+- `.github/workflows/ci.yml`
+
+---
+
 ## Hardware del Equipo
 
 | Componente | Especificación |
