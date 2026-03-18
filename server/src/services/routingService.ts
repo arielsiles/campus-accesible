@@ -260,8 +260,19 @@ export async function calculateRoute(
     })
     .filter((w): w is WaypointSummary => w !== null);
 
+  // Filter out co-located bridge waypoints (same coordinates, different IDs)
+  // These are artifacts of cross-route graph bridges and should not generate instructions
+  const filteredWaypoints = waypointSummaries.filter((wp, idx) => {
+    if (idx === 0) return true;
+    const prev = waypointSummaries[idx - 1];
+    const sameLocation =
+      Math.abs(wp.coordinates[0] - prev.coordinates[0]) < 0.0001 &&
+      Math.abs(wp.coordinates[1] - prev.coordinates[1]) < 0.0001;
+    return !sameLocation;
+  });
+
   // Generate instructions
-  const instructions = generateInstructions(waypointSummaries, transportData);
+  const instructions = generateInstructions(filteredWaypoints, transportData);
 
   // Build GeoJSON
   const segments = await prisma.routeSegment.findMany({
@@ -320,11 +331,11 @@ export async function calculateRoute(
   return {
     success: true,
     route: {
-      origin: waypointSummaries[0],
-      destination: waypointSummaries[waypointSummaries.length - 1],
+      origin: filteredWaypoints[0],
+      destination: filteredWaypoints[filteredWaypoints.length - 1],
       totalDistance: Math.round(totalDistance),
       estimatedTime,
-      waypoints: waypointSummaries,
+      waypoints: filteredWaypoints,
       instructions,
       geojson,
     },

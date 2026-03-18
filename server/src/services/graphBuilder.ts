@@ -132,5 +132,65 @@ export async function buildGraph(
     }
   }
 
+  // FR-201: Create bridge edges between co-located waypoints across routes
+  // Groups waypoints by rounded coordinates to find shared physical locations
+  const allWaypoints = routes.flatMap((r) => r.waypoints);
+  const locationGroups = new Map<string, typeof allWaypoints>();
+
+  for (const wp of allWaypoints) {
+    // Round to ~1m precision to match co-located waypoints
+    const key = `${wp.latitude.toFixed(4)},${wp.longitude.toFixed(4)}`;
+    const group = locationGroups.get(key) ?? [];
+    group.push(wp);
+    locationGroups.set(key, group);
+  }
+
+  for (const group of locationGroups.values()) {
+    if (group.length < 2) continue;
+
+    // Connect all co-located waypoints with zero-cost bridge edges
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        const wpA = group[i];
+        const wpB = group[j];
+
+        seenNodes.add(wpA.id);
+        seenNodes.add(wpB.id);
+
+        // Forward bridge
+        try {
+          await prisma.graphEdge.create({
+            data: {
+              fromWaypointId: wpA.id,
+              toWaypointId: wpB.id,
+              distance: 0,
+              weight: 0,
+              bidirectional: true,
+            },
+          });
+          edgesCreated++;
+        } catch {
+          // Already exists
+        }
+
+        // Reverse bridge
+        try {
+          await prisma.graphEdge.create({
+            data: {
+              fromWaypointId: wpB.id,
+              toWaypointId: wpA.id,
+              distance: 0,
+              weight: 0,
+              bidirectional: true,
+            },
+          });
+          edgesCreated++;
+        } catch {
+          // Already exists
+        }
+      }
+    }
+  }
+
   return { nodesCount: seenNodes.size, edgesCount: edgesCreated };
 }
