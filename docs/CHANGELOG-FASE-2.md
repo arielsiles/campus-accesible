@@ -166,6 +166,19 @@
   - Flujo completo: buscar → seleccionar destino → calcular ruta → navegar
 - **A11y:** Labels en español, roles alert/progressbar/button, assertive live regions, touch targets ≥ 48dp
 
+### Fix — Cross-Route Pathfinding `Fix`
+
+- **Commit:** `6f3583c`
+- **Spec IDs:** FR-201, FR-207
+- **Archivos modificados:**
+  - `server/src/services/graphBuilder.ts` — Aristas puente de coste 0 entre waypoints co-localizados de distintas rutas
+  - `server/src/services/routingService.ts` — Filtro de waypoints duplicados consecutivos en instrucciones
+- **Problema:** El grafo solo conectaba waypoints dentro de cada ruta. Waypoints co-localizados (mismo punto físico, IDs distintos como `wp-odontologia` y `wp-odontologia-r3`) no tenían aristas entre sí, haciendo imposible el pathfinding entre rutas.
+- **Solución:**
+  - `buildGraph()` agrupa waypoints por coordenadas (precisión 4 decimales ≈ 1m) y crea aristas bidireccionales de peso 0 entre co-localizados
+  - `calculateRoute()` filtra waypoints consecutivos con mismas coordenadas antes de generar instrucciones, evitando "Sal de X y camina hacia X"
+- **Resultado:** Grafo pasa de 22 a 30 aristas. Navegación inter-ruta funcional.
+
 ---
 
 ## Resumen de Tests — Fase 2
@@ -205,4 +218,4 @@
 
 ---
 
-*Registro actualizado: 2026-03-18*
+*Registro actualizado: 2026-03-18 — Fase 2 completada, 12 commits, 65 tests passing*
