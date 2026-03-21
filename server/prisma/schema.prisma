@@ -67,6 +67,13 @@ model RouteSegment {
   riskFactors      String[] @default([]) @map("risk_factors")
   audioDescription String?  @map("audio_description")
 
+  // FR-401: Physical accessibility for reduced mobility
+  hasRamp        Boolean @default(false) @map("has_ramp")
+  hasStairs      Boolean @default(false) @map("has_stairs")
+  pathWidth      Float   @default(2.0)   @map("path_width")
+  maxSlope       Float   @default(0.0)   @map("max_slope")
+  surfaceQuality String  @default("good") @map("surface_quality")
+
   routeId String @map("route_id")
   route   Route  @relation(fields: [routeId], references: [id], onDelete: Cascade)
 

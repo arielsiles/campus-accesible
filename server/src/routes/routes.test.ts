@@ -109,6 +109,39 @@ describe("GET /api/routes/:id [FR-007]", () => {
     expect(safeProps.riskFactors).toBeUndefined();
   });
 
+  it("includes physical accessibility data in segments [TST-FR-401-001]", async () => {
+    const res = await app.request("/api/routes/test-route-1");
+    const body = await res.json();
+
+    const segments = body.features.filter(
+      (f: Record<string, unknown>) =>
+        (f.properties as Record<string, unknown>).featureType === "route-segment"
+    );
+
+    // seg-medicina-odonto — accessible with ramp
+    const accessibleSeg = segments.find(
+      (f: Record<string, unknown>) =>
+        (f.properties as Record<string, unknown>).segmentId === "seg-medicina-odonto"
+    );
+    expect(accessibleSeg).toBeDefined();
+    const accessibleProps = accessibleSeg.properties as Record<string, unknown>;
+    expect(accessibleProps.hasRamp).toBe(true);
+    expect(accessibleProps.hasStairs).toBe(false);
+    expect(accessibleProps.pathWidth).toBe(2.5);
+    expect(accessibleProps.maxSlope).toBe(3.2);
+    expect(accessibleProps.surfaceQuality).toBe("good");
+
+    // seg-bus-metro — has stairs
+    const stairsSeg = segments.find(
+      (f: Record<string, unknown>) =>
+        (f.properties as Record<string, unknown>).segmentId === "seg-bus-metro"
+    );
+    expect(stairsSeg).toBeDefined();
+    const stairsProps = stairsSeg.properties as Record<string, unknown>;
+    expect(stairsProps.hasStairs).toBe(true);
+    expect(stairsProps.hasRamp).toBe(false);
+  });
+
   it("responds 404 for non-existing route [FR-007]", async () => {
     const res = await app.request("/api/routes/no-existe");
 

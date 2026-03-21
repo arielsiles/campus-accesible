@@ -83,6 +83,12 @@ routeRoutes.get("/routes/:id", async (c) => {
           ...(seg.riskDescription && { riskDescription: seg.riskDescription }),
           ...(seg.riskFactors.length > 0 && { riskFactors: seg.riskFactors }),
           ...(seg.audioDescription && { audioDescription: seg.audioDescription }),
+          // FR-401: Physical accessibility
+          hasRamp: seg.hasRamp,
+          hasStairs: seg.hasStairs,
+          pathWidth: seg.pathWidth,
+          maxSlope: seg.maxSlope,
+          surfaceQuality: seg.surfaceQuality,
         },
       })),
     ],

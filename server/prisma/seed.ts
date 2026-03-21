@@ -100,6 +100,12 @@ async function main() {
             riskDescription: null,
             riskFactors: [],
             audioDescription: "Camino pavimentado con ligero descenso hacia Odontología",
+            // FR-401: Physical accessibility
+            hasRamp: true,
+            hasStairs: false,
+            pathWidth: 2.5,
+            maxSlope: 3.2,
+            surfaceQuality: "good",
             geometryGeoJson: JSON.stringify({
               type: "LineString",
               coordinates: [coords.medicina, coords.odontologia],
@@ -115,6 +121,12 @@ async function main() {
             riskDescription: "Superficie irregular en tramo central",
             riskFactors: ["superficie_irregular"],
             audioDescription: "Tramo pavimentado con zona de adoquinado irregular en el centro",
+            // FR-401: Physical accessibility
+            hasRamp: false,
+            hasStairs: false,
+            pathWidth: 2.0,
+            maxSlope: 1.5,
+            surfaceQuality: "fair",
             geometryGeoJson: JSON.stringify({
               type: "LineString",
               coordinates: [coords.odontologia, coords.farmacia],
@@ -130,6 +142,12 @@ async function main() {
             riskDescription: null,
             riskFactors: [],
             audioDescription: "Camino llano y pavimentado hasta la parada de bus",
+            // FR-401: Physical accessibility
+            hasRamp: true,
+            hasStairs: false,
+            pathWidth: 3.0,
+            maxSlope: 0.5,
+            surfaceQuality: "good",
             geometryGeoJson: JSON.stringify({
               type: "LineString",
               coordinates: [coords.farmacia, coords.busFarmacia],
@@ -145,6 +163,12 @@ async function main() {
             riskDescription: "Cruce con tráfico moderado sin semáforo",
             riskFactors: ["cruce_sin_semaforo", "trafico_vehicular"],
             audioDescription: "Descenso hacia Metro. Precaución: cruce con tráfico sin semáforo",
+            // FR-401: Physical accessibility — stairs at metro entrance
+            hasRamp: false,
+            hasStairs: true,
+            pathWidth: 1.8,
+            maxSlope: 6.5,
+            surfaceQuality: "good",
             geometryGeoJson: JSON.stringify({
               type: "LineString",
               coordinates: [coords.busFarmacia, coords.metroCU],
@@ -222,6 +246,12 @@ async function main() {
             riskDescription: null,
             riskFactors: [],
             audioDescription: "Camino pavimentado con ligero descenso hacia Filosofía",
+            // FR-401: Physical accessibility
+            hasRamp: true,
+            hasStairs: false,
+            pathWidth: 2.2,
+            maxSlope: 2.0,
+            surfaceQuality: "good",
             geometryGeoJson: JSON.stringify({
               type: "LineString",
               coordinates: [coords.derecho, coords.filosofia],
@@ -237,6 +267,12 @@ async function main() {
             riskDescription: "Adoquinado con poca iluminación nocturna",
             riskFactors: ["superficie_irregular", "mala_iluminacion"],
             audioDescription: "Adoquinado con cuesta descendente. Poca iluminación por la noche",
+            // FR-401: Physical accessibility — narrow cobblestone path
+            hasRamp: false,
+            hasStairs: false,
+            pathWidth: 1.2,
+            maxSlope: 4.0,
+            surfaceQuality: "poor",
             geometryGeoJson: JSON.stringify({
               type: "LineString",
               coordinates: [coords.filosofia, coords.busFarmacia],
@@ -252,6 +288,12 @@ async function main() {
             riskDescription: "Cruce con tráfico moderado sin semáforo",
             riskFactors: ["cruce_sin_semaforo", "trafico_vehicular"],
             audioDescription: "Descenso hacia Metro. Precaución: cruce con tráfico sin semáforo",
+            // FR-401: Physical accessibility — stairs at metro
+            hasRamp: false,
+            hasStairs: true,
+            pathWidth: 1.8,
+            maxSlope: 6.5,
+            surfaceQuality: "good",
             geometryGeoJson: JSON.stringify({
               type: "LineString",
               coordinates: [coords.busFarmacia, coords.metroCU],
@@ -334,6 +376,12 @@ async function main() {
             riskDescription: null,
             riskFactors: [],
             audioDescription: "Camino pavimentado con ligero descenso",
+            // FR-401: Physical accessibility
+            hasRamp: true,
+            hasStairs: false,
+            pathWidth: 2.8,
+            maxSlope: 1.5,
+            surfaceQuality: "good",
             geometryGeoJson: JSON.stringify({
               type: "LineString",
               coordinates: [coords.informatica, coords.matematicas],
@@ -349,6 +397,12 @@ async function main() {
             riskDescription: null,
             riskFactors: [],
             audioDescription: "Tramo llano y pavimentado entre facultades",
+            // FR-401: Physical accessibility
+            hasRamp: false,
+            hasStairs: false,
+            pathWidth: 2.0,
+            maxSlope: 0.8,
+            surfaceQuality: "good",
             geometryGeoJson: JSON.stringify({
               type: "LineString",
               coordinates: [coords.matematicas, coords.fisicas],
@@ -364,6 +418,12 @@ async function main() {
             riskDescription: "Grava suelta con pendiente descendente",
             riskFactors: ["superficie_irregular", "pendiente_pronunciada"],
             audioDescription: "Camino de grava con cuesta descendente. Precaución: superficie irregular",
+            // FR-401: Physical accessibility — steep gravel with stairs
+            hasRamp: false,
+            hasStairs: true,
+            pathWidth: 1.3,
+            maxSlope: 9.5,
+            surfaceQuality: "poor",
             geometryGeoJson: JSON.stringify({
               type: "LineString",
               coordinates: [coords.fisicas, coords.odontologia],
@@ -379,6 +439,12 @@ async function main() {
             riskDescription: null,
             riskFactors: [],
             audioDescription: "Subida suave pavimentada hacia Medicina",
+            // FR-401: Physical accessibility
+            hasRamp: true,
+            hasStairs: false,
+            pathWidth: 2.5,
+            maxSlope: 3.2,
+            surfaceQuality: "good",
             geometryGeoJson: JSON.stringify({
               type: "LineString",
               coordinates: [coords.odontologia, coords.medicina],
