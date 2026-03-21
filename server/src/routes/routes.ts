@@ -1,6 +1,8 @@
 // FR-007: Routes endpoints — GET /api/routes, GET /api/routes/:id
+// FR-307: AI description generation endpoint
 import { Hono } from "hono";
 import { PrismaClient } from "@prisma/client";
+import { descriptionGenerator } from "../services/descriptionGenerator";
 
 const prisma = new PrismaClient();
 
@@ -77,10 +79,68 @@ routeRoutes.get("/routes/:id", async (c) => {
           surfaceType: seg.surfaceType,
           elevationChange: seg.elevationChange,
           riskLevel: seg.riskLevel,
+          // FR-304: Detailed risk assessment
+          ...(seg.riskDescription && { riskDescription: seg.riskDescription }),
+          ...(seg.riskFactors.length > 0 && { riskFactors: seg.riskFactors }),
+          ...(seg.audioDescription && { audioDescription: seg.audioDescription }),
         },
       })),
     ],
   };
 
   return c.json(geojson);
+});
+
+// FR-307: POST /api/routes/generate-descriptions — batch AI description generation
+routeRoutes.post("/routes/generate-descriptions", async (c) => {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+
+  const segments = await prisma.routeSegment.findMany({
+    select: {
+      id: true,
+      name: true,
+      surfaceType: true,
+      elevationChange: true,
+      riskLevel: true,
+      riskDescription: true,
+      riskFactors: true,
+      audioDescription: true,
+    },
+  });
+
+  const segmentData = segments.map((seg) => ({
+    id: seg.id,
+    name: seg.name,
+    surfaceType: seg.surfaceType,
+    elevationChange: seg.elevationChange,
+    riskLevel: seg.riskLevel,
+    riskDescription: seg.riskDescription,
+    riskFactors: seg.riskFactors,
+  }));
+
+  const results = await descriptionGenerator.generateBatch(
+    segmentData,
+    apiKey || undefined,
+  );
+
+  // Update descriptions in database
+  let updated = 0;
+  for (let i = 0; i < segments.length; i++) {
+    await prisma.routeSegment.update({
+      where: { id: segments[i].id },
+      data: { audioDescription: results[i].audioDescription },
+    });
+    updated++;
+  }
+
+  return c.json({
+    updated,
+    source: results[0]?.source ?? "template",
+    descriptions: results.map((r, i) => ({
+      segmentId: segments[i].id,
+      name: segments[i].name,
+      audioDescription: r.audioDescription,
+      source: r.source,
+    })),
+  });
 });

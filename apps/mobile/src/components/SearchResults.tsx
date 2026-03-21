@@ -1,5 +1,6 @@
 // FR-206: Search results dropdown component
-import React from "react";
+// FR-303: Accessible search results with screen reader announcements
+import React, { useEffect, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -9,6 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import type { SearchResult } from "@campus-gps/shared-types";
+import { screenReaderService } from "../accessibility/screenReaderService";
 
 // FR-206: Human-readable waypoint type labels in Spanish
 const WAYPOINT_TYPE_LABELS: Record<string, string> = {
@@ -33,6 +35,16 @@ export default function SearchResults({
   loading,
   onSelect,
 }: SearchResultsProps) {
+  const prevCount = useRef<number | null>(null);
+
+  // FR-303: Announce result count changes to screen reader
+  useEffect(() => {
+    if (!loading && prevCount.current !== results.length) {
+      prevCount.current = results.length;
+      screenReaderService.announceSearchResults(results.length);
+    }
+  }, [results.length, loading]);
+
   if (loading) {
     return (
       <View
@@ -63,6 +75,8 @@ export default function SearchResults({
       data={results}
       keyExtractor={(item) => item.waypointId}
       keyboardShouldPersistTaps="handled"
+      accessibilityRole="list"
+      accessibilityLabel={`Resultados de búsqueda, ${results.length} encontrados`}
       renderItem={({ item }) => {
         const typeLabel =
           WAYPOINT_TYPE_LABELS[item.waypointType] ?? item.waypointType;

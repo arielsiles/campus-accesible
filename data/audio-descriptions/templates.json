@@ -1,0 +1,40 @@
+{
+  "surface": {
+    "paved": "Superficie pavimentada, terreno firme",
+    "cobblestone": "Atención: suelo adoquinado",
+    "gravel": "Atención: suelo de grava, terreno suelto",
+    "dirt": "Atención: camino de tierra",
+    "tactile": "Pavimento táctil disponible"
+  },
+  "elevation": {
+    "uphill": "Cuesta arriba pronunciada, {meters} metros de desnivel",
+    "downhill": "Cuesta abajo pronunciada, {meters} metros de desnivel",
+    "threshold": 3
+  },
+  "risk": {
+    "low": "Precaución leve: {description}",
+    "medium": "Precaución: {description}",
+    "high": "¡Atención! Zona de riesgo alto: {description}"
+  },
+  "waypoint": {
+    "intersection": "Cruce con {name}, continúa {direction}",
+    "transport_stop": "Parada de transporte: {name}",
+    "entrance": "Entrada: {name}",
+    "building": "Edificio: {name}",
+    "landmark": "Punto de referencia: {name}",
+    "hazard": "¡Peligro! {name}",
+    "rest_area": "Zona de descanso: {name}",
+    "information_point": "Punto de información: {name}"
+  },
+  "riskFactors": {
+    "cruce_sin_semaforo": "cruce sin semáforo",
+    "mala_iluminacion": "zona con mala iluminación",
+    "superficie_irregular": "superficie irregular",
+    "pendiente_pronunciada": "pendiente pronunciada",
+    "trafico_vehicular": "tráfico vehicular cercano",
+    "obras_temporales": "obras temporales en la zona",
+    "escalones": "escalones en el camino",
+    "sin_barandilla": "tramo sin barandilla",
+    "paso_estrecho": "paso estrecho"
+  }
+}

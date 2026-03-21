@@ -1,6 +1,8 @@
 // FR-208: Active navigation screen with route, instructions, progress
+// FR-303: Screen reader integration with focus management
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
+import { focusManager } from "../accessibility/focusManager";
 import MapView from "../components/MapView";
 import RoutePolyline from "../components/RoutePolyline";
 import WaypointMarker from "../components/WaypointMarker";
@@ -79,6 +81,14 @@ export default function NavigationScreen() {
     };
   }, [isNavigating]);
 
+  // FR-303: Set focus on instruction banner when screen mounts
+  const instructionRef = useRef(null);
+  useEffect(() => {
+    if (isNavigating) {
+      return focusManager.createScreenFocusHandler(instructionRef);
+    }
+  }, [isNavigating]);
+
   // FR-208: Center map on user or route origin
   const mapCenter: [number, number] = gpsPosition ??
     route?.origin.coordinates ?? [-3.7264, 40.4468];
@@ -100,7 +110,7 @@ export default function NavigationScreen() {
       </MapView>
 
       {/* FR-208: Top overlay — instruction banner */}
-      <View style={styles.topOverlay}>
+      <View style={styles.topOverlay} ref={instructionRef}>
         {currentInstruction && (
           <InstructionBanner instruction={currentInstruction} />
         )}

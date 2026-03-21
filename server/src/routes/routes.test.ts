@@ -76,6 +76,39 @@ describe("GET /api/routes/:id [FR-007]", () => {
     ).toEqual(["6"]);
   });
 
+  it("includes riskDescription and riskFactors for segments with risks [TST-FR-304-001]", async () => {
+    const res = await app.request("/api/routes/test-route-1");
+    const body = await res.json();
+
+    const segments = body.features.filter(
+      (f: Record<string, unknown>) =>
+        (f.properties as Record<string, unknown>).featureType === "route-segment"
+    );
+
+    // seg-bus-metro has medium risk with factors
+    const riskSegment = segments.find(
+      (f: Record<string, unknown>) =>
+        (f.properties as Record<string, unknown>).segmentId === "seg-bus-metro"
+    );
+    expect(riskSegment).toBeDefined();
+    const props = riskSegment.properties as Record<string, unknown>;
+    expect(props.riskLevel).toBe("medium");
+    expect(props.riskDescription).toBe("Cruce con tráfico moderado sin semáforo");
+    expect(props.riskFactors).toEqual(["cruce_sin_semaforo", "trafico_vehicular"]);
+    expect(props.audioDescription).toContain("Precaución");
+
+    // seg-medicina-odonto has no risk — should not have riskDescription
+    const safeSegment = segments.find(
+      (f: Record<string, unknown>) =>
+        (f.properties as Record<string, unknown>).segmentId === "seg-medicina-odonto"
+    );
+    expect(safeSegment).toBeDefined();
+    const safeProps = safeSegment.properties as Record<string, unknown>;
+    expect(safeProps.riskLevel).toBe("none");
+    expect(safeProps.riskDescription).toBeUndefined();
+    expect(safeProps.riskFactors).toBeUndefined();
+  });
+
   it("responds 404 for non-existing route [FR-007]", async () => {
     const res = await app.request("/api/routes/no-existe");
 

@@ -320,6 +320,10 @@ export async function calculateRoute(
           surfaceType: seg.surfaceType,
           elevationChange: seg.elevationChange,
           riskLevel: seg.riskLevel,
+          // FR-304: Detailed risk assessment
+          ...(seg.riskDescription && { riskDescription: seg.riskDescription }),
+          ...(seg.riskFactors.length > 0 && { riskFactors: seg.riskFactors }),
+          ...(seg.audioDescription && { audioDescription: seg.audioDescription }),
         },
       })),
     ],
