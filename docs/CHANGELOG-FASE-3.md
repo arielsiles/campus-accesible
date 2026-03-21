@@ -19,14 +19,14 @@
 | Tarea | Spec IDs | Estado | Progreso |
 |-------|----------|--------|----------|
 | T3.1 — Audio Beacons con HRTF | FR-301, NFR-301, NFR-303 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
-| T3.2 — Audio-Descripciones Contextuales | FR-302, NFR-301 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
+| T3.2 — Audio-Descripciones Contextuales | FR-302, NFR-301 | ✅ Completada | ██████████ 100% |
 | T3.3 — Integración TalkBack/VoiceOver | FR-303, NFR-302 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
 | T3.4 — Evaluación de Riesgos Detallada | FR-304 | ✅ Completada | ██████████ 100% |
 | T3.5 — Perfil de Accesibilidad Visual | FR-305, NFR-302 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
 | T3.6 — Conducción Ósea | FR-306, NFR-303 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
 | T3.7 — Generador IA de Descripciones | FR-307 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
 
-**Progreso global Fase 3:** █░░░░░░░░░ 14% (1/7 tareas)
+**Progreso global Fase 3:** ██░░░░░░░░ 29% (2/7 tareas)
 
 ---
 
@@ -46,6 +46,35 @@
 ---
 
 ## Registro de Cambios
+
+### 2026-03-21 — T3.2: Audio-Descripciones Contextuales [FR-302]
+
+**Categoría:** Implementación
+**Branch:** `fase3/T3.2-audio-descriptions`
+
+#### Cambios realizados:
+
+1. **ttsService.ts** — Wrapper de Text-to-Speech sobre `expo-speech`:
+   - `speak()` con idioma español (es-ES), rate 0.9, pitch 1.0
+   - `stop()`, `setEnabled()`, `getIsSpeaking()` para control global
+
+2. **audioDescriptionService.ts** — Generador de descripciones contextuales:
+   - `describeSurface()` — Descripción por tipo de superficie (adoquín, grava, tierra, táctil)
+   - `describeElevation()` — Alerta de desnivel > 3m (cuesta arriba/abajo)
+   - `describeRisk()` — Descripción por nivel de riesgo con factores detallados
+   - `describeWaypoint()` — Descripción de waypoints (cruces, paradas, edificios)
+   - `describeSegment()` — Combinación completa con modo "full" y "reduced"
+   - `announceSegmentEntry()` / `announceWaypoint()` — Triggers TTS con deduplicación
+
+3. **templates.json** — Plantillas de audio-descripción en español:
+   - Superficies, desniveles, riesgos, waypoints, factores de riesgo
+
+4. **Tests** — 18 tests pasando:
+   - Surface descriptions (4), elevation (3), risk (4), waypoint (3), segment (4)
+   - Incluye TST-FR-302-001 y TST-FR-302-002
+
+5. **tsconfig fix** — Excluir `*.test.ts` del build de shared-types
+
 
 ### 2026-03-21 — T3.4: Evaluación de Riesgos Detallada [FR-304]
 
