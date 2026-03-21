@@ -18,13 +18,13 @@
 
 | Tarea | Spec IDs | Estado | Progreso |
 |-------|----------|--------|----------|
-| T4.1 — Perfil Movilidad Reducida | FR-401, NFR-403 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
+| T4.1 — Perfil Movilidad Reducida | FR-401, NFR-403 | ✅ Completada | ██████████ 100% |
 | T4.2 — Lectura Fácil con IA | FR-402, NFR-402 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
 | T4.3 — Vibración Háptica Direccional | FR-403, NFR-401 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
 | T4.4 — Selector Multi-Perfil | FR-404 | ✅ Completada | ██████████ 100% |
 | T4.5 — Pesos de Ruta por Perfil | FR-405 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
 
-**Progreso global Fase 4:** ██░░░░░░░░ 20% (1/5 tareas)
+**Progreso global Fase 4:** ████░░░░░░ 40% (2/5 tareas)
 
 ---
 
@@ -43,6 +43,48 @@
 ---
 
 ## Registro de Cambios
+
+### 2026-03-21 — T4.1: Perfil Movilidad Reducida [FR-401]
+
+**Categoría:** Implementación
+**Branch:** `fase4/T4.4-multi-profile-selector`
+
+#### Cambios realizados:
+
+1. **mobility.ts** (shared-types) — Tipos de accesibilidad física:
+   - `SurfaceQuality`: good, fair, poor
+   - `PhysicalAccessibility`: hasRamp, hasStairs, pathWidth, maxSlope, surfaceQuality
+   - `MobilityBarrier`: stairs, steep_slope, narrow_path, poor_surface con severidad
+   - `MobilityAssessment`: isAccessible, barriers, segmentId
+   - Labels en español para barreras y calidades de superficie
+
+2. **Schema Prisma** — 5 nuevos campos en `RouteSegment`:
+   - `hasRamp` (Boolean), `hasStairs` (Boolean), `pathWidth` (Float, default 2.0m)
+   - `maxSlope` (Float, default 0%), `surfaceQuality` (String, default "good")
+   - Migración `add_physical_accessibility_fields` aplicada
+
+3. **Seed** — 11 segmentos con datos de accesibilidad física realistas:
+   - Segmentos con escalones: seg-bus-metro, seg-bus-metro-r2, seg-fisicas-odonto
+   - Segmentos estrechos: seg-filosofia-bus (1.2m), seg-fisicas-odonto (1.3m)
+   - Superficie pobre: seg-filosofia-bus, seg-fisicas-odonto
+
+4. **mobilityAssessmentService.ts** — Servicio de evaluación:
+   - `assessSegment()` — Detecta barreras con preferencias configurables
+   - `assessRoute()` — Evalúa múltiples segmentos
+   - `hasBlockingBarriers()` — Verificación rápida de bloqueos
+
+5. **MobilityAlert.tsx** — Componente de alerta:
+   - Colores por severidad (blocking=rojo, warning=amarillo)
+   - Accesibilidad completa (role=alert, liveRegion=assertive)
+
+6. **API** — GeoJSON incluye datos de accesibilidad física en segmentos
+
+7. **Tests** — 17 tests pasando:
+   - `mobilityAssessmentService.test.ts`: 9 tests (TST-FR-401-001, TST-FR-401-002)
+   - `mobility.test.ts`: 2 tests (labels)
+   - `routes.test.ts`: 6 tests (+1 nuevo TST-FR-401-001 en API)
+
+---
 
 ### 2026-03-21 — T4.4: Selector Multi-Perfil [FR-404]
 
