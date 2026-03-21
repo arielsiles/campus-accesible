@@ -13,6 +13,18 @@ interface WaypointMarkerProps {
   routeData: RouteFeatureCollection;
 }
 
+// FR-303: Waypoint type labels in Spanish for accessible announcements
+const WAYPOINT_TYPE_LABELS: Record<string, string> = {
+  building: "Edificio",
+  entrance: "Entrada",
+  intersection: "Cruce",
+  transport_stop: "Parada de transporte",
+  landmark: "Punto de referencia",
+  hazard: "Zona de precaución",
+  rest_area: "Área de descanso",
+  information_point: "Punto de información",
+};
+
 // FR-005: Color mapping by waypoint type (spec enums) for visual differentiation
 const WAYPOINT_COLORS: Record<string, string> = {
   building: "#1a73e8",
@@ -37,14 +49,18 @@ export default function WaypointMarker({ routeData }: WaypointMarkerProps) {
     };
   }, [routeData]);
 
-  // FR-005: Show waypoint info on tap
+  // FR-005, FR-303: Show waypoint info on tap with accessible announcement
   const handlePress = useCallback((event: OnPressEvent) => {
     const feature = event.features?.[0];
     if (!feature?.properties) return;
 
     const name = feature.properties.name as string;
     const description = feature.properties.description as string;
-    Alert.alert(name, description);
+    const waypointType = feature.properties.waypointType as string;
+    const typeLabel = WAYPOINT_TYPE_LABELS[waypointType] ?? waypointType;
+
+    // FR-303: Alert includes type for screen reader context
+    Alert.alert(`${name} — ${typeLabel}`, description);
   }, []);
 
   return (

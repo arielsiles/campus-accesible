@@ -20,13 +20,13 @@
 |-------|----------|--------|----------|
 | T3.1 — Audio Beacons con HRTF | FR-301, NFR-301, NFR-303 | ✅ Completada | ██████████ 100% |
 | T3.2 — Audio-Descripciones Contextuales | FR-302, NFR-301 | ✅ Completada | ██████████ 100% |
-| T3.3 — Integración TalkBack/VoiceOver | FR-303, NFR-302 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
+| T3.3 — Integración TalkBack/VoiceOver | FR-303, NFR-302 | ✅ Completada | ██████████ 100% |
 | T3.4 — Evaluación de Riesgos Detallada | FR-304 | ✅ Completada | ██████████ 100% |
 | T3.5 — Perfil de Accesibilidad Visual | FR-305, NFR-302 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
 | T3.6 — Conducción Ósea | FR-306, NFR-303 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
 | T3.7 — Generador IA de Descripciones | FR-307 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
 
-**Progreso global Fase 3:** ████░░░░░░ 43% (3/7 tareas)
+**Progreso global Fase 3:** ██████░░░░ 57% (4/7 tareas)
 
 ---
 
@@ -46,6 +46,36 @@
 ---
 
 ## Registro de Cambios
+
+### 2026-03-21 — T3.3: Integración TalkBack/VoiceOver [FR-303]
+
+**Categoría:** Implementación
+**Branch:** `fase3/T3.3-talkback-voiceover`
+
+#### Cambios realizados:
+
+1. **screenReaderService.ts** — Servicio de detección y anuncios para TalkBack/VoiceOver:
+   - `initialize()` — Detección de screen reader activo (TST-FR-303-001)
+   - `announce()` — Anuncio via `AccessibilityInfo.announceForAccessibility`
+   - `announceSearchResults()` — Anuncia conteo de resultados en español
+   - `announceInstruction()`, `announceAlert()` — Anuncios contextuales
+   - `onScreenReaderChanged()` — Suscripción a cambios de estado
+
+2. **focusManager.ts** — Gestión de foco de accesibilidad:
+   - `setFocus()` — Mueve foco a componente específico (TST-FR-303-002)
+   - `createScreenFocusHandler()` — Auto-foco al montar pantalla
+
+3. **SearchResults.tsx** — Actualizado con anuncio de resultados al screen reader y `accessibilityRole="list"` en FlatList
+
+4. **WaypointMarker.tsx** — Añadidas etiquetas de tipo en español para anuncios al tocar waypoints
+
+5. **NavigationScreen.tsx** — Foco automático en instruction banner al montar pantalla
+
+6. **Tests** — 10 tests pasando:
+   - Screen reader detection (2), announce (4), search results (1), instruction (1), alert (1), focus (2)
+   - Incluye TST-FR-303-001 y TST-FR-303-002
+
+---
 
 ### 2026-03-21 — T3.1: Audio Beacons con HRTF [FR-301]
 
