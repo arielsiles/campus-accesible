@@ -260,4 +260,78 @@
 
 ---
 
+## Merge a Main
+
+**Fecha:** 2026-03-21
+**Commit:** `a5b596a`
+**Mensaje:** `merge: Fase 3 — Accesibilidad Visual y Audio 3D [FR-301–FR-307]`
+
+### Resumen Fase 3
+
+| Métrica | Valor |
+|---------|-------|
+| Tareas completadas | 7/7 |
+| Commits de implementación | 7 |
+| Archivos modificados/creados | 40 |
+| Líneas añadidas | +3,279 |
+| Tests nuevos | 80 |
+| Requisitos funcionales cubiertos | FR-301 a FR-307 (7) |
+| Requisitos no funcionales cubiertos | NFR-301 a NFR-303 (3) |
+
+### Dependencias añadidas
+
+| Paquete | Ubicación | Propósito |
+|---------|-----------|-----------|
+| `expo-speech` | mobile | Text-to-Speech (FR-302) |
+| `expo-sensors` | mobile | Brújula/magnetómetro (FR-301) |
+| `expo-av` | mobile | Audio beacon 3D (FR-301) |
+| `@react-native-async-storage/async-storage` | mobile | Persistencia perfil (FR-305) |
+| `@anthropic-ai/sdk` | server | Generador IA descripciones (FR-307) |
+
+### Arquitectura de archivos Fase 3
+
+```
+apps/mobile/src/
+  audio/
+    hrtfProcessor.ts          — FR-301: Procesamiento HRTF stereo/mono
+    audioBeaconEngine.ts      — FR-301: Motor audio beacon 3D
+    audioBeaconEngine.test.ts — 18 tests
+    boneConduction.ts         — FR-306: Adaptador conducción ósea
+    boneConduction.test.ts    — 7 tests
+  hooks/
+    useCompass.ts             — FR-301: Hook brújula
+    useAudioBeacon.ts         — FR-301: Hook integrador beacon
+  services/
+    ttsService.ts             — FR-302: Wrapper TTS expo-speech
+    audioDescriptionService.ts      — FR-302: Descripciones contextuales
+    audioDescriptionService.test.ts — 18 tests
+  accessibility/
+    screenReaderService.ts      — FR-303: TalkBack/VoiceOver
+    screenReaderService.test.ts — 10 tests
+    focusManager.ts             — FR-303: Gestión de foco
+  store/
+    accessibilityStore.ts      — FR-305: Perfil accesibilidad
+    accessibilityStore.test.ts — 9 tests
+  components/
+    ProfileSelector.tsx        — FR-305: Selector primer uso
+    RiskAlert.tsx              — FR-304: Alerta de riesgo
+  screens/
+    AccessibilitySettingsScreen.tsx — FR-305: Configuración
+
+server/src/
+  services/
+    descriptionGenerator.ts      — FR-307: Generador IA + fallback
+    descriptionGenerator.test.ts — 9 tests
+
+packages/shared-types/src/
+  risk.ts      — FR-304: Tipos de riesgo
+  risk.test.ts — 4 tests
+
+data/audio-descriptions/
+  templates.json — FR-302: Plantillas audio-descripción
+```
+
+---
+
 *Registro creado: 2026-03-20*
+*Fase completada: 2026-03-21*
