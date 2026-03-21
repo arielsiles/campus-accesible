@@ -1,0 +1,35 @@
+{
+  "navigation": {
+    "start": "Sal de {from}. Ve a {to}.",
+    "continue": "Camina recto. Ve a {to}.",
+    "turn_left": "Gira a la izquierda. Ve a {to}.",
+    "turn_right": "Gira a la derecha. Ve a {to}.",
+    "slight_left": "Gira un poco a la izquierda. Ve a {to}.",
+    "slight_right": "Gira un poco a la derecha. Ve a {to}.",
+    "arrive": "Ya llegaste. Estás en {to}."
+  },
+  "risk": {
+    "cruce_sin_semaforo": "Cuidado. Hay un cruce. No hay semáforo.",
+    "mala_iluminacion": "Cuidado. Hay poca luz.",
+    "superficie_irregular": "Cuidado. El suelo es irregular.",
+    "pendiente_pronunciada": "Cuidado. Hay una cuesta.",
+    "trafico_vehicular": "Cuidado. Pasan coches.",
+    "obras_temporales": "Cuidado. Hay obras.",
+    "escalones": "Cuidado. Hay escalones.",
+    "sin_barandilla": "Cuidado. No hay barandilla.",
+    "paso_estrecho": "Cuidado. El camino es estrecho."
+  },
+  "surface": {
+    "paved": "El suelo es bueno.",
+    "cobblestone": "El suelo es de piedra.",
+    "gravel": "El suelo es de grava.",
+    "dirt": "El suelo es de tierra.",
+    "tactile": "Hay guía en el suelo."
+  },
+  "mobility": {
+    "stairs_blocking": "No puedes pasar. Hay escalones.",
+    "steep_slope": "Cuidado. La cuesta es muy empinada.",
+    "narrow_path": "Cuidado. El camino es estrecho.",
+    "poor_surface": "Cuidado. El suelo está mal."
+  }
+}

@@ -1,4 +1,4 @@
-// FR-207: Route calculation orchestration service
+// FR-207, FR-405: Route calculation orchestration service
 import { PrismaClient } from "@prisma/client";
 import { findShortestPath } from "@campus-gps/routing-engine";
 import type { GraphEdgeInput } from "@campus-gps/routing-engine";
@@ -8,6 +8,11 @@ import type {
   NavigationInstruction,
 } from "@campus-gps/shared-types";
 import { haversineDistance } from "./graphBuilder";
+import {
+  applyProfileWeight,
+  type RoutingProfile,
+  type SegmentData,
+} from "./profileWeights";
 
 const WALKING_SPEED_MS = 4000 / 3600; // 4 km/h in m/s
 
@@ -146,11 +151,13 @@ export type RouteCalculationResult =
 
 /**
  * Calculate optimal route between two waypoints.
+ * FR-405: Accepts profile parameter for accessibility-weighted routing.
  */
 export async function calculateRoute(
   prisma: PrismaClient,
   originWaypointId: string,
-  destinationWaypointId: string
+  destinationWaypointId: string,
+  profile: RoutingProfile = "standard"
 ): Promise<RouteCalculationResult> {
   // Validate same origin/destination
   if (originWaypointId === destinationWaypointId) {
@@ -189,18 +196,39 @@ export async function calculateRoute(
     };
   }
 
-  // Load graph edges
+  // Load graph edges with segment data for profile-based weight adjustment
   const graphEdges = await prisma.graphEdge.findMany({
-    include: { fromWaypoint: true, toWaypoint: true },
+    include: {
+      fromWaypoint: true,
+      toWaypoint: true,
+      segment: true,
+    },
   });
 
-  const edges: GraphEdgeInput[] = graphEdges.map((e) => ({
-    id: e.id,
-    fromWaypointId: e.fromWaypoint.waypointId,
-    toWaypointId: e.toWaypoint.waypointId,
-    distance: e.distance,
-    weight: e.weight,
-  }));
+  // FR-405: Apply profile-based weight multipliers
+  const edges: GraphEdgeInput[] = graphEdges.map((e) => {
+    let weight = e.weight;
+
+    if (e.segment && profile !== "standard") {
+      const segData: SegmentData = {
+        hasStairs: e.segment.hasStairs,
+        maxSlope: e.segment.maxSlope,
+        pathWidth: e.segment.pathWidth,
+        surfaceQuality: e.segment.surfaceQuality,
+        surfaceType: e.segment.surfaceType,
+        riskLevel: e.segment.riskLevel,
+      };
+      weight = applyProfileWeight(e.weight, segData, profile);
+    }
+
+    return {
+      id: e.id,
+      fromWaypointId: e.fromWaypoint.waypointId,
+      toWaypointId: e.toWaypoint.waypointId,
+      distance: e.distance,
+      weight,
+    };
+  });
 
   // Run Dijkstra
   const pathResult = findShortestPath(
@@ -324,6 +352,12 @@ export async function calculateRoute(
           ...(seg.riskDescription && { riskDescription: seg.riskDescription }),
           ...(seg.riskFactors.length > 0 && { riskFactors: seg.riskFactors }),
           ...(seg.audioDescription && { audioDescription: seg.audioDescription }),
+          // FR-401: Physical accessibility
+          hasRamp: seg.hasRamp,
+          hasStairs: seg.hasStairs,
+          pathWidth: seg.pathWidth,
+          maxSlope: seg.maxSlope,
+          surfaceQuality: seg.surfaceQuality,
         },
       })),
     ],

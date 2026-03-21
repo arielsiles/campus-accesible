@@ -41,6 +41,12 @@ export interface RouteSegmentProperties {
   riskDescription?: string;
   riskFactors?: string[];
   audioDescription?: string;
+  // FR-401: Physical accessibility
+  hasRamp?: boolean;
+  hasStairs?: boolean;
+  pathWidth?: number;
+  maxSlope?: number;
+  surfaceQuality?: string;
 }
 
 export interface WaypointProperties {

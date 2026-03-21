@@ -37,6 +37,15 @@ export { TransportType } from "./transport";
 export type { RiskFactor, RiskAssessment } from "./risk";
 export { RISK_FACTOR_LABELS } from "./risk";
 
+// FR-401: Physical accessibility types
+export type {
+  SurfaceQuality,
+  PhysicalAccessibility,
+  MobilityBarrier,
+  MobilityAssessment,
+} from "./mobility";
+export { MOBILITY_BARRIER_LABELS, SURFACE_QUALITY_LABELS } from "./mobility";
+
 // FR-204, FR-207: Navigation types
 export type {
   RouteCalculationRequest,

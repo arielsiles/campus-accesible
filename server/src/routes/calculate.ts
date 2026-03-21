@@ -1,8 +1,9 @@
-// FR-207: Route calculation endpoint
+// FR-207, FR-405: Route calculation endpoint with profile-based weights
 import { Hono } from "hono";
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { calculateRoute } from "../services/routingService";
+import type { RoutingProfile } from "../services/profileWeights";
 
 const prisma = new PrismaClient();
 
@@ -11,6 +12,10 @@ export const calculateRoutes = new Hono();
 const routeCalculationSchema = z.object({
   origin: z.string().min(1, "origin is required"),
   destination: z.string().min(1, "destination is required"),
+  profile: z
+    .enum(["standard", "visual_disability", "reduced_mobility", "deaf", "easy_read"])
+    .optional()
+    .default("standard"),
 });
 
 // POST /api/routes/calculate
@@ -40,7 +45,8 @@ calculateRoutes.post("/routes/calculate", async (c) => {
   const result = await calculateRoute(
     prisma,
     parsed.data.origin,
-    parsed.data.destination
+    parsed.data.destination,
+    parsed.data.profile as RoutingProfile
   );
 
   if (!result.success) {

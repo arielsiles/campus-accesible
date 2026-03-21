@@ -1,10 +1,17 @@
-// FR-305: Accessibility profile store with persistence
+// FR-305, FR-404: Accessibility profile store with persistence
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const STORAGE_KEY = "@campus-gps/accessibility-profile";
 
-export type AccessibilityProfile = "standard" | "visual_disability";
+// FR-404: Extended to 5 profiles
+export type AccessibilityProfile =
+  | "standard"
+  | "visual_disability"
+  | "reduced_mobility"
+  | "deaf"
+  | "easy_read";
+
 export type AudioOutputType = "stereo" | "bone_conduction";
 export type DescriptionFrequency = "full" | "reduced";
 
@@ -32,6 +39,19 @@ export interface AccessibilityState {
   // Audio output — FR-306
   audioOutputType: AudioOutputType;
 
+  // FR-403: Haptic navigation for deaf profile
+  hapticEnabled: boolean;
+
+  // FR-402: Easy read mode
+  easyReadEnabled: boolean;
+  largeFontEnabled: boolean;
+
+  // FR-401: Mobility barriers
+  mobilityBarriersEnabled: boolean;
+  avoidStairs: boolean;
+  maxSlopePercent: number; // default 8
+  minPathWidth: number; // default 1.5m
+
   // Actions
   setProfile: (profile: AccessibilityProfile) => void;
   setAudioBeaconEnabled: (enabled: boolean) => void;
@@ -43,27 +63,95 @@ export interface AccessibilityState {
   setTtsPitch: (pitch: number) => void;
   setHighContrastEnabled: (enabled: boolean) => void;
   setAudioOutputType: (type: AudioOutputType) => void;
+  setHapticEnabled: (enabled: boolean) => void;
+  setEasyReadEnabled: (enabled: boolean) => void;
+  setLargeFontEnabled: (enabled: boolean) => void;
+  setMobilityBarriersEnabled: (enabled: boolean) => void;
+  setAvoidStairs: (avoid: boolean) => void;
+  setMaxSlopePercent: (percent: number) => void;
+  setMinPathWidth: (width: number) => void;
   loadFromStorage: () => Promise<void>;
 }
 
-// FR-305: Default preferences per profile
+// FR-305, FR-404: Default preferences per profile
 function getProfileDefaults(profile: AccessibilityProfile) {
-  if (profile === "visual_disability") {
-    return {
-      audioBeaconEnabled: true,
-      audioDescriptionsEnabled: true,
-      ttsEnabled: true,
-      highContrastEnabled: true,
-      descriptionFrequency: "full" as DescriptionFrequency,
-    };
+  switch (profile) {
+    case "visual_disability":
+      return {
+        audioBeaconEnabled: true,
+        audioDescriptionsEnabled: true,
+        ttsEnabled: true,
+        highContrastEnabled: true,
+        descriptionFrequency: "full" as DescriptionFrequency,
+        hapticEnabled: false,
+        easyReadEnabled: false,
+        largeFontEnabled: false,
+        mobilityBarriersEnabled: false,
+        avoidStairs: false,
+        maxSlopePercent: 8,
+        minPathWidth: 1.5,
+      };
+    case "reduced_mobility":
+      return {
+        audioBeaconEnabled: false,
+        audioDescriptionsEnabled: false,
+        ttsEnabled: false,
+        highContrastEnabled: false,
+        descriptionFrequency: "reduced" as DescriptionFrequency,
+        hapticEnabled: false,
+        easyReadEnabled: false,
+        largeFontEnabled: false,
+        mobilityBarriersEnabled: true,
+        avoidStairs: true,
+        maxSlopePercent: 8,
+        minPathWidth: 1.5,
+      };
+    case "deaf":
+      return {
+        audioBeaconEnabled: false,
+        audioDescriptionsEnabled: false,
+        ttsEnabled: false,
+        highContrastEnabled: false,
+        descriptionFrequency: "reduced" as DescriptionFrequency,
+        hapticEnabled: true,
+        easyReadEnabled: false,
+        largeFontEnabled: false,
+        mobilityBarriersEnabled: false,
+        avoidStairs: false,
+        maxSlopePercent: 8,
+        minPathWidth: 1.5,
+      };
+    case "easy_read":
+      return {
+        audioBeaconEnabled: false,
+        audioDescriptionsEnabled: true,
+        ttsEnabled: true,
+        highContrastEnabled: false,
+        descriptionFrequency: "full" as DescriptionFrequency,
+        hapticEnabled: false,
+        easyReadEnabled: true,
+        largeFontEnabled: true,
+        mobilityBarriersEnabled: false,
+        avoidStairs: false,
+        maxSlopePercent: 8,
+        minPathWidth: 1.5,
+      };
+    default:
+      return {
+        audioBeaconEnabled: false,
+        audioDescriptionsEnabled: false,
+        ttsEnabled: false,
+        highContrastEnabled: false,
+        descriptionFrequency: "reduced" as DescriptionFrequency,
+        hapticEnabled: false,
+        easyReadEnabled: false,
+        largeFontEnabled: false,
+        mobilityBarriersEnabled: false,
+        avoidStairs: false,
+        maxSlopePercent: 8,
+        minPathWidth: 1.5,
+      };
   }
-  return {
-    audioBeaconEnabled: false,
-    audioDescriptionsEnabled: false,
-    ttsEnabled: false,
-    highContrastEnabled: false,
-    descriptionFrequency: "reduced" as DescriptionFrequency,
-  };
 }
 
 // FR-305: Persist state to AsyncStorage
@@ -81,6 +169,13 @@ async function persistState(state: Partial<AccessibilityState>): Promise<void> {
       ttsPitch: state.ttsPitch,
       highContrastEnabled: state.highContrastEnabled,
       audioOutputType: state.audioOutputType,
+      hapticEnabled: state.hapticEnabled,
+      easyReadEnabled: state.easyReadEnabled,
+      largeFontEnabled: state.largeFontEnabled,
+      mobilityBarriersEnabled: state.mobilityBarriersEnabled,
+      avoidStairs: state.avoidStairs,
+      maxSlopePercent: state.maxSlopePercent,
+      minPathWidth: state.minPathWidth,
     };
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch {
@@ -100,6 +195,13 @@ export const useAccessibilityStore = create<AccessibilityState>((set, get) => ({
   ttsPitch: 1.0,
   highContrastEnabled: false,
   audioOutputType: "stereo",
+  hapticEnabled: false,
+  easyReadEnabled: false,
+  largeFontEnabled: false,
+  mobilityBarriersEnabled: false,
+  avoidStairs: false,
+  maxSlopePercent: 8,
+  minPathWidth: 1.5,
 
   setProfile: (profile) => {
     const defaults = getProfileDefaults(profile);
@@ -150,6 +252,41 @@ export const useAccessibilityStore = create<AccessibilityState>((set, get) => ({
 
   setAudioOutputType: (type) => {
     set({ audioOutputType: type });
+    persistState(get());
+  },
+
+  setHapticEnabled: (enabled) => {
+    set({ hapticEnabled: enabled });
+    persistState(get());
+  },
+
+  setEasyReadEnabled: (enabled) => {
+    set({ easyReadEnabled: enabled });
+    persistState(get());
+  },
+
+  setLargeFontEnabled: (enabled) => {
+    set({ largeFontEnabled: enabled });
+    persistState(get());
+  },
+
+  setMobilityBarriersEnabled: (enabled) => {
+    set({ mobilityBarriersEnabled: enabled });
+    persistState(get());
+  },
+
+  setAvoidStairs: (avoid) => {
+    set({ avoidStairs: avoid });
+    persistState(get());
+  },
+
+  setMaxSlopePercent: (percent) => {
+    set({ maxSlopePercent: Math.max(1, Math.min(20, percent)) });
+    persistState(get());
+  },
+
+  setMinPathWidth: (width) => {
+    set({ minPathWidth: Math.max(0.5, Math.min(3.0, width)) });
     persistState(get());
   },
 

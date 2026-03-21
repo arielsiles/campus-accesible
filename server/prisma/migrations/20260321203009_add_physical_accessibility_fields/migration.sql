@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "route_segments" ADD COLUMN     "has_ramp" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "has_stairs" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "max_slope" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+ADD COLUMN     "path_width" DOUBLE PRECISION NOT NULL DEFAULT 2.0,
+ADD COLUMN     "surface_quality" TEXT NOT NULL DEFAULT 'good';
