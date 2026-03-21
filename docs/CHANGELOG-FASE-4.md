@@ -22,9 +22,9 @@
 | T4.2 — Lectura Fácil con IA | FR-402, NFR-402 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
 | T4.3 — Vibración Háptica Direccional | FR-403, NFR-401 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
 | T4.4 — Selector Multi-Perfil | FR-404 | ✅ Completada | ██████████ 100% |
-| T4.5 — Pesos de Ruta por Perfil | FR-405 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
+| T4.5 — Pesos de Ruta por Perfil | FR-405 | ✅ Completada | ██████████ 100% |
 
-**Progreso global Fase 4:** ████░░░░░░ 40% (2/5 tareas)
+**Progreso global Fase 4:** ██████░░░░ 60% (3/5 tareas)
 
 ---
 
@@ -43,6 +43,34 @@
 ---
 
 ## Registro de Cambios
+
+### 2026-03-21 — T4.5: Pesos de Ruta por Perfil [FR-405]
+
+**Categoría:** Implementación
+**Branch:** `fase4/T4.4-multi-profile-selector`
+
+#### Cambios realizados:
+
+1. **profileWeights.ts** — Servicio de pesos por perfil:
+   - `ProfileWeightFactors`: stairsPenalty, slopePenalty, narrowPathPenalty, poorSurfacePenalty, riskPenalty, tactileBonification
+   - Configuraciones por perfil: reduced_mobility (escalones x10, estrecho x5), visual_disability (riesgo alto x3, táctil x0.5)
+   - `calculateProfileMultiplier()` — Calcula multiplicador compuesto por segmento
+   - `applyProfileWeight()` — Aplica multiplicador al peso base
+
+2. **calculate.ts** — API acepta parámetro `profile`:
+   - Schema Zod extendido con enum de 5 perfiles
+   - Default "standard" para compatibilidad retroactiva
+
+3. **routingService.ts** — Pesos dinámicos en tiempo de consulta:
+   - Carga datos de segmento junto con edges del grafo
+   - Aplica `applyProfileWeight()` a cada edge según perfil
+   - Sin necesidad de reconstruir el grafo
+
+4. **Tests** — 8 tests pasando + 4 regresión:
+   - TST-FR-405-001 (escalones x10), TST-FR-405-002 (rutas diferentes por perfil)
+   - Bonificación táctil, penalización riesgo, configs por perfil
+
+---
 
 ### 2026-03-21 — T4.1: Perfil Movilidad Reducida [FR-401]
 
