@@ -3,6 +3,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { healthRoutes } from "./routes/health";
 import { routeRoutes } from "./routes/routes";
+import { calculateRoutes } from "./routes/calculate";
+import { waypointRoutes } from "./routes/waypoints";
 
 const app = new Hono();
 
@@ -17,6 +19,8 @@ app.use(
 // Routes
 app.route("/api", healthRoutes);
 app.route("/api", routeRoutes);
+app.route("/api", calculateRoutes);
+app.route("/api", waypointRoutes);
 
 // 404 handler
 app.notFound((c) => {

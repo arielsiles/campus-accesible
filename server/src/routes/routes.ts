@@ -47,7 +47,7 @@ routeRoutes.get("/routes/:id", async (c) => {
       description: route.description,
     },
     features: [
-      // Waypoint features (Point)
+      // Waypoint features (Point) — FR-205: include transport info
       ...route.waypoints.map((wp) => ({
         type: "Feature" as const,
         geometry: {
@@ -60,6 +60,10 @@ routeRoutes.get("/routes/:id", async (c) => {
           name: wp.name,
           description: wp.description,
           waypointType: wp.waypointType,
+          ...(wp.transportType && {
+            transportType: wp.transportType,
+            transportLines: wp.transportLines,
+          }),
         },
       })),
       // Segment features (LineString) — geometry from geometryGeoJson field

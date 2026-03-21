@@ -37,8 +37,16 @@ model Waypoint {
   longitude    Float
   orderIndex   Int          @map("order_index")
 
+  // FR-205: Transport connection data
+  transportType  TransportType? @map("transport_type")
+  transportLines String[]       @default([]) @map("transport_lines")
+
   routeId String @map("route_id")
   route   Route  @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+  // FR-201: Graph edge relations
+  edgesFrom GraphEdge[] @relation("EdgesFrom")
+  edgesTo   GraphEdge[] @relation("EdgesTo")
 
   @@map("waypoints")
 }
@@ -57,7 +65,38 @@ model RouteSegment {
   routeId String @map("route_id")
   route   Route  @relation(fields: [routeId], references: [id], onDelete: Cascade)
 
+  // FR-201: Graph edges derived from this segment
+  graphEdges GraphEdge[]
+
   @@map("route_segments")
+}
+
+/// FR-201: Graph edge connecting two waypoints with weighted cost
+model GraphEdge {
+  id             String   @id @default(cuid())
+  fromWaypointId String   @map("from_waypoint_id")
+  toWaypointId   String   @map("to_waypoint_id")
+  segmentId      String?  @map("segment_id")
+  distance       Float    // meters
+  weight         Float    // calculated cost (distance + accessibility factors)
+  bidirectional  Boolean  @default(true)
+
+  fromWaypoint Waypoint      @relation("EdgesFrom", fields: [fromWaypointId], references: [id])
+  toWaypoint   Waypoint      @relation("EdgesTo", fields: [toWaypointId], references: [id])
+  segment      RouteSegment? @relation(fields: [segmentId], references: [id])
+
+  @@unique([fromWaypointId, toWaypointId])
+  @@map("graph_edges")
+}
+
+// FR-205: Transport type for transport_stop waypoints
+enum TransportType {
+  metro
+  bus
+  intercambiador
+  cercanias
+
+  @@map("transport_type")
 }
 
 enum WaypointType {

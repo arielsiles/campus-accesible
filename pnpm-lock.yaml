@@ -55,6 +55,19 @@ importers:
         specifier: ^2
         version: 2.1.9(@types/node@20.19.37)(lightningcss@1.27.0)(terser@5.46.1)
 
+  packages/routing-engine:
+    dependencies:
+      '@campus-gps/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+    devDependencies:
+      typescript:
+        specifier: ^5.4
+        version: 5.9.3
+      vitest:
+        specifier: ^2
+        version: 2.1.9(@types/node@20.19.37)(lightningcss@1.27.0)(terser@5.46.1)
+
   packages/shared-types:
     devDependencies:
       typescript:
@@ -63,6 +76,9 @@ importers:
 
   server:
     dependencies:
+      '@campus-gps/routing-engine':
+        specifier: workspace:*
+        version: link:../packages/routing-engine
       '@campus-gps/shared-types':
         specifier: workspace:*
         version: link:../packages/shared-types

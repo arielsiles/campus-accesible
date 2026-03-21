@@ -89,10 +89,14 @@ docs/               → Specs, setup guide, governance
 
 ## Current Phase
 
-**Fase 2: Motor de Navegación y Routing**
+**Fase 3: Accesibilidad Visual y Audio 3D**
+- Spec: `docs/SPEC-FASE-3.md`
+- Changelog: `docs/CHANGELOG-FASE-3.md`
+- Governance: `docs/GOBERNANZA-PROYECTO.md`
+
+**Fase 2: Motor de Navegación y Routing** ✅ Completada
 - Spec: `docs/SPEC-FASE-2.md`
 - Changelog: `docs/CHANGELOG-FASE-2.md`
-- Governance: `docs/GOBERNANZA-PROYECTO.md`
 
 **Fase 1: Fundación y Prototipo Básico** ✅ Completada
 - Spec: `docs/SPEC-FASE-1.md`

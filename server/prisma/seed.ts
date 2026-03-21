@@ -1,25 +1,33 @@
-// FR-008: Seed script — test route Medicina → Metro Ciudad Universitaria
-// Aligned with SPEC-FASE-1.md §4.2 enums
+// FR-008, FR-201, FR-205: Seed script — test routes with graph and transport data
+// Aligned with SPEC-FASE-2.md §10 test data requirements
 import { PrismaClient } from "@prisma/client";
+import { buildGraph } from "../src/services/graphBuilder";
 
 const prisma = new PrismaClient();
 
+// Waypoint coordinates [lng, lat]
+const coords = {
+  medicina: [-3.7267, 40.4489],
+  odontologia: [-3.7258, 40.4479],
+  farmacia: [-3.7271, 40.4471],
+  busFarmacia: [-3.7275, 40.4465],
+  metroCU: [-3.7302, 40.4449],
+  derecho: [-3.7285, 40.4495],
+  filosofia: [-3.7290, 40.4480],
+  informatica: [-3.7230, 40.4510],
+  matematicas: [-3.7240, 40.4500],
+  fisicas: [-3.7250, 40.4492],
+};
+
 async function main() {
-  // Clean existing data
+  // Clean existing data (order matters for FK constraints)
+  await prisma.graphEdge.deleteMany();
   await prisma.routeSegment.deleteMany();
   await prisma.waypoint.deleteMany();
   await prisma.route.deleteMany();
 
-  // Waypoint coordinates [lng, lat] for GeoJSON geometry
-  const coords = {
-    medicina: [-3.7267, 40.4489],
-    odontologia: [-3.7258, 40.4479],
-    farmacia: [-3.7271, 40.4471],
-    busFarmacia: [-3.7275, 40.4465],
-    metroCU: [-3.7302, 40.4449],
-  };
-
-  const route = await prisma.route.create({
+  // === Route 1: Medicina → Metro CU (existing from Fase 1) ===
+  const route1 = await prisma.route.create({
     data: {
       id: "test-route-1",
       name: "Medicina → Metro Ciudad Universitaria",
@@ -55,20 +63,26 @@ async function main() {
             orderIndex: 2,
           },
           {
+            // FR-205: Transport stop with lines
             waypointId: "wp-bus-farmacia",
             name: "Parada de bus Farmacia",
             description: "Parada de autobús frente a Farmacia, líneas G y U",
             waypointType: "transport_stop",
+            transportType: "bus",
+            transportLines: ["G", "U"],
             latitude: 40.4465,
             longitude: -3.7275,
             orderIndex: 3,
           },
           {
+            // FR-205: Transport stop with lines
             waypointId: "wp-metro-cu",
             name: "Metro Ciudad Universitaria",
             description:
               "Estación de Metro Ciudad Universitaria, línea 6 (circular)",
             waypointType: "transport_stop",
+            transportType: "metro",
+            transportLines: ["6"],
             latitude: 40.4449,
             longitude: -3.7302,
             orderIndex: 4,
@@ -128,14 +142,231 @@ async function main() {
         ],
       },
     },
-    include: {
-      waypoints: true,
-      segments: true,
-    },
+    include: { waypoints: true, segments: true },
   });
 
+  // === Route 2: Derecho → Metro CU ===
+  const route2 = await prisma.route.create({
+    data: {
+      id: "test-route-2",
+      name: "Derecho → Metro Ciudad Universitaria",
+      description:
+        "Ruta accesible desde la Facultad de Derecho hasta Metro Ciudad Universitaria",
+      waypoints: {
+        create: [
+          {
+            waypointId: "wp-derecho",
+            name: "Facultad de Derecho",
+            description: "Entrada principal de la Facultad de Derecho (UCM)",
+            waypointType: "building",
+            latitude: 40.4495,
+            longitude: -3.7285,
+            orderIndex: 0,
+          },
+          {
+            waypointId: "wp-filosofia",
+            name: "Facultad de Filosofía",
+            description: "Cruce frente a la Facultad de Filosofía y Letras",
+            waypointType: "intersection",
+            latitude: 40.4480,
+            longitude: -3.7290,
+            orderIndex: 1,
+          },
+          {
+            // Shared location with route 1 (bus stop)
+            waypointId: "wp-bus-farmacia-r2",
+            name: "Parada de bus Farmacia",
+            description: "Parada de autobús frente a Farmacia, líneas G y U",
+            waypointType: "transport_stop",
+            transportType: "bus",
+            transportLines: ["G", "U"],
+            latitude: 40.4465,
+            longitude: -3.7275,
+            orderIndex: 2,
+          },
+          {
+            // Shared location with route 1 (metro)
+            waypointId: "wp-metro-cu-r2",
+            name: "Metro Ciudad Universitaria",
+            description:
+              "Estación de Metro Ciudad Universitaria, línea 6 (circular)",
+            waypointType: "transport_stop",
+            transportType: "metro",
+            transportLines: ["6"],
+            latitude: 40.4449,
+            longitude: -3.7302,
+            orderIndex: 3,
+          },
+        ],
+      },
+      segments: {
+        create: [
+          {
+            segmentId: "seg-derecho-filosofia",
+            name: "Derecho a Filosofía",
+            surfaceType: "paved",
+            elevationChange: -0.8,
+            riskLevel: "none",
+            geometryGeoJson: JSON.stringify({
+              type: "LineString",
+              coordinates: [coords.derecho, coords.filosofia],
+            }),
+            orderIndex: 0,
+          },
+          {
+            segmentId: "seg-filosofia-bus",
+            name: "Filosofía a parada de bus",
+            surfaceType: "cobblestone",
+            elevationChange: -1.0,
+            riskLevel: "low",
+            geometryGeoJson: JSON.stringify({
+              type: "LineString",
+              coordinates: [coords.filosofia, coords.busFarmacia],
+            }),
+            orderIndex: 1,
+          },
+          {
+            segmentId: "seg-bus-metro-r2",
+            name: "Parada de bus a Metro (vía Derecho)",
+            surfaceType: "paved",
+            elevationChange: -2.3,
+            riskLevel: "low",
+            geometryGeoJson: JSON.stringify({
+              type: "LineString",
+              coordinates: [coords.busFarmacia, coords.metroCU],
+            }),
+            orderIndex: 2,
+          },
+        ],
+      },
+    },
+    include: { waypoints: true, segments: true },
+  });
+
+  // === Route 3: Informática → Medicina ===
+  const route3 = await prisma.route.create({
+    data: {
+      id: "test-route-3",
+      name: "Informática → Medicina",
+      description:
+        "Ruta accesible desde la Facultad de Informática hasta Medicina",
+      waypoints: {
+        create: [
+          {
+            waypointId: "wp-informatica",
+            name: "Facultad de Informática",
+            description:
+              "Entrada principal de la Facultad de Informática (UCM)",
+            waypointType: "building",
+            latitude: 40.451,
+            longitude: -3.723,
+            orderIndex: 0,
+          },
+          {
+            waypointId: "wp-matematicas",
+            name: "Facultad de Matemáticas",
+            description: "Cruce frente a la Facultad de Matemáticas",
+            waypointType: "intersection",
+            latitude: 40.45,
+            longitude: -3.724,
+            orderIndex: 1,
+          },
+          {
+            waypointId: "wp-fisicas",
+            name: "Facultad de Físicas",
+            description: "Entrada de la Facultad de Ciencias Físicas",
+            waypointType: "building",
+            latitude: 40.4492,
+            longitude: -3.725,
+            orderIndex: 2,
+          },
+          {
+            // Shared with route 1 — same physical location
+            waypointId: "wp-odontologia-r3",
+            name: "Facultad de Odontología",
+            description: "Cruce frente a la Facultad de Odontología",
+            waypointType: "intersection",
+            latitude: 40.4479,
+            longitude: -3.7258,
+            orderIndex: 3,
+          },
+          {
+            // Shared with route 1 — same physical location
+            waypointId: "wp-medicina-r3",
+            name: "Facultad de Medicina",
+            description: "Entrada principal de la Facultad de Medicina (UCM)",
+            waypointType: "building",
+            latitude: 40.4489,
+            longitude: -3.7267,
+            orderIndex: 4,
+          },
+        ],
+      },
+      segments: {
+        create: [
+          {
+            segmentId: "seg-info-mates",
+            name: "Informática a Matemáticas",
+            surfaceType: "paved",
+            elevationChange: -0.5,
+            riskLevel: "none",
+            geometryGeoJson: JSON.stringify({
+              type: "LineString",
+              coordinates: [coords.informatica, coords.matematicas],
+            }),
+            orderIndex: 0,
+          },
+          {
+            segmentId: "seg-mates-fisicas",
+            name: "Matemáticas a Físicas",
+            surfaceType: "paved",
+            elevationChange: -0.3,
+            riskLevel: "none",
+            geometryGeoJson: JSON.stringify({
+              type: "LineString",
+              coordinates: [coords.matematicas, coords.fisicas],
+            }),
+            orderIndex: 1,
+          },
+          {
+            segmentId: "seg-fisicas-odonto",
+            name: "Físicas a Odontología",
+            surfaceType: "gravel",
+            elevationChange: -1.0,
+            riskLevel: "medium",
+            geometryGeoJson: JSON.stringify({
+              type: "LineString",
+              coordinates: [coords.fisicas, coords.odontologia],
+            }),
+            orderIndex: 2,
+          },
+          {
+            segmentId: "seg-odonto-medicina",
+            name: "Odontología a Medicina",
+            surfaceType: "paved",
+            elevationChange: 1.2,
+            riskLevel: "none",
+            geometryGeoJson: JSON.stringify({
+              type: "LineString",
+              coordinates: [coords.odontologia, coords.medicina],
+            }),
+            orderIndex: 3,
+          },
+        ],
+      },
+    },
+    include: { waypoints: true, segments: true },
+  });
+
+  // FR-201: Build route graph from all routes
+  const graphResult = await buildGraph(prisma);
+
   console.log(
-    `Seed complete: route "${route.name}" with ${route.waypoints.length} waypoints and ${route.segments.length} segments`
+    `Seed complete:\n` +
+      `  Route 1: "${route1.name}" — ${route1.waypoints.length} waypoints, ${route1.segments.length} segments\n` +
+      `  Route 2: "${route2.name}" — ${route2.waypoints.length} waypoints, ${route2.segments.length} segments\n` +
+      `  Route 3: "${route3.name}" — ${route3.waypoints.length} waypoints, ${route3.segments.length} segments\n` +
+      `  Graph: ${graphResult.nodesCount} nodes, ${graphResult.edgesCount} edges`
   );
 }
 
