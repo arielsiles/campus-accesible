@@ -1,7 +1,7 @@
 # Historial de Cambios — Fase 4: Perfiles Adicionales de Accesibilidad
 
 > Registro cronológico de implementación y cambios durante la Fase 4 del proyecto **Campus GPS Accesible**.
-> **Estado:** 🔲 Pendiente
+> **Estado:** ✅ Completada
 > **Spec:** `docs/SPEC-FASE-4.md`
 
 ---
@@ -20,11 +20,11 @@
 |-------|----------|--------|----------|
 | T4.1 — Perfil Movilidad Reducida | FR-401, NFR-403 | ✅ Completada | ██████████ 100% |
 | T4.2 — Lectura Fácil con IA | FR-402, NFR-402 | ✅ Completada | ██████████ 100% |
-| T4.3 — Vibración Háptica Direccional | FR-403, NFR-401 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
+| T4.3 — Vibración Háptica Direccional | FR-403, NFR-401 | ✅ Completada | ██████████ 100% |
 | T4.4 — Selector Multi-Perfil | FR-404 | ✅ Completada | ██████████ 100% |
 | T4.5 — Pesos de Ruta por Perfil | FR-405 | ✅ Completada | ██████████ 100% |
 
-**Progreso global Fase 4:** ████████░░ 80% (4/5 tareas)
+**Progreso global Fase 4:** ██████████ 100% (5/5 tareas)
 
 ---
 
@@ -43,6 +43,41 @@
 ---
 
 ## Registro de Cambios
+
+### 2026-03-21 — T4.3: Vibración Háptica Direccional [FR-403]
+
+**Categoría:** Implementación
+**Branch:** `fase4/T4.4-multi-profile-selector`
+
+#### Cambios realizados:
+
+1. **hapticPatterns.ts** — Definición de patrones de vibración:
+   - 6 patrones: turn_left (2 pulsos cortos), turn_right (3 pulsos cortos), go_straight (1 largo), alert_risk (rápidos 1s), arrival (3 largos), off_route (2 largos)
+   - Intensidades: light, medium, heavy por paso
+   - `actionToPattern()` — Mapeo de acciones de navegación a patrones
+   - `getPatternDuration()` — Duración total del patrón
+   - Labels en español para configuración
+
+2. **hapticNavigationService.ts** — Servicio de navegación háptica:
+   - `playPattern()` — Ejecuta secuencia de vibraciones via expo-haptics
+   - `vibrateForAction()` — Vibra según instrucción de navegación
+   - `vibrateAlert()` — Alerta por nivel de riesgo (heavy para alto, single para medio)
+   - `vibrateArrival()` / `vibrateOffRoute()` — Patrones especiales
+   - `setEnabled()` / `getIsEnabled()` — Control global
+
+3. **HapticIndicator.tsx** — Indicador visual de dirección:
+   - Iconos grandes por dirección (⬅️ ➡️ ⬆️ 📍)
+   - Distancia al siguiente waypoint
+   - Accesibilidad completa (role=alert, liveRegion=polite)
+
+4. **Dependencia** — `expo-haptics@14.0.1` (SDK 52 compatible)
+
+5. **Tests** — 12 tests pasando:
+   - TST-FR-403-001 (patrón giro izquierda), TST-FR-403-002 (alerta riesgo)
+   - TST-FR-403-003 (patrones ≤ 2 segundos)
+   - Mapeo acciones, enable/disable, labels
+
+---
 
 ### 2026-03-21 — T4.2: Lectura Fácil con IA [FR-402]
 
