@@ -33,6 +33,10 @@ export { DEFAULT_WEIGHT_FACTORS } from "./graph";
 export type { TransportInfo } from "./transport";
 export { TransportType } from "./transport";
 
+// FR-304: Risk assessment types
+export type { RiskFactor, RiskAssessment } from "./risk";
+export { RISK_FACTOR_LABELS } from "./risk";
+
 // FR-204, FR-207: Navigation types
 export type {
   RouteCalculationRequest,

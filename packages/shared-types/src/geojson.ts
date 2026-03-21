@@ -37,6 +37,10 @@ export interface RouteSegmentProperties {
   surfaceType: SurfaceType;
   elevationChange: number;
   riskLevel: RiskLevel;
+  // FR-304: Detailed risk assessment
+  riskDescription?: string;
+  riskFactors?: string[];
+  audioDescription?: string;
 }
 
 export interface WaypointProperties {
