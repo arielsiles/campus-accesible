@@ -1,4 +1,5 @@
 // FR-007: Hono server entry point
+import "dotenv/config";
 import { serve } from "@hono/node-server";
 import app from "./app";
 

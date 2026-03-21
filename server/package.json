@@ -22,6 +22,7 @@
     "@campus-gps/shared-types": "workspace:*",
     "@hono/node-server": "^1.19.11",
     "@prisma/client": "^6",
+    "dotenv": "^17.3.1",
     "hono": "^4",
     "zod": "^3"
   },
