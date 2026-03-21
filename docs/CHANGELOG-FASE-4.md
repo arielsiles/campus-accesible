@@ -219,4 +219,74 @@
 
 ---
 
+## Merge a Main
+
+**Fecha:** 2026-03-21
+**Commit:** `b321f4e`
+**Mensaje:** `merge: Fase 4 — Perfiles Adicionales de Accesibilidad [FR-401–FR-405]`
+
+### Resumen Fase 4
+
+| Métrica | Valor |
+|---------|-------|
+| Tareas completadas | 5/5 |
+| Commits de implementación | 10 |
+| Archivos modificados/creados | 34 |
+| Líneas añadidas | +2,787 |
+| Tests nuevos | 73 |
+| Tests totales del proyecto | 196 |
+| Requisitos funcionales cubiertos | FR-401 a FR-405 (5) |
+| Requisitos no funcionales cubiertos | NFR-401 a NFR-403 (3) |
+
+### Dependencias añadidas
+
+| Paquete | Ubicación | Propósito |
+|---------|-----------|-----------|
+| `expo-haptics` | mobile | Vibración háptica direccional (FR-403) |
+
+### Arquitectura de archivos Fase 4
+
+```
+apps/mobile/src/
+  store/
+    accessibilityStore.ts          — FR-404: Store extendido 5 perfiles
+    accessibilityStore.test.ts     — 17 tests
+  components/
+    ProfileCard.tsx                — FR-404: Tarjeta de perfil reutilizable
+    ProfileSelector.tsx            — FR-404: Selector multi-perfil
+    MobilityAlert.tsx              — FR-401: Alerta de barrera física
+    HapticIndicator.tsx            — FR-403: Indicador visual dirección
+  screens/
+    AccessibilitySettingsScreen.tsx — FR-404: Configuración multi-perfil
+  services/
+    mobilityAssessmentService.ts      — FR-401: Evaluación barreras
+    mobilityAssessmentService.test.ts — 9 tests
+    easyReadAdapter.ts                — FR-402: Adaptador lectura fácil
+    easyReadAdapter.test.ts           — 7 tests
+  haptics/
+    hapticPatterns.ts                    — FR-403: Definición patrones
+    hapticNavigationService.ts           — FR-403: Servicio háptico
+    hapticNavigationService.test.ts      — 12 tests
+
+server/src/
+  services/
+    profileWeights.ts      — FR-405: Pesos por perfil
+    profileWeights.test.ts — 8 tests
+    easyReadService.ts      — FR-402: Simplificación IA
+    easyReadService.test.ts — 8 tests
+  routes/
+    easyRead.ts            — FR-402: Endpoint lectura fácil
+    calculate.ts           — FR-405: Acepta profile param
+
+packages/shared-types/src/
+  mobility.ts      — FR-401: Tipos accesibilidad física
+  mobility.test.ts — 2 tests
+
+data/easy-read/
+  templates.json — FR-402: Plantillas lectura fácil
+```
+
+---
+
 *Registro creado: 2026-03-21*
+*Fase completada: 2026-03-21*
