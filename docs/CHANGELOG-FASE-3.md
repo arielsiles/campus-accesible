@@ -22,11 +22,11 @@
 | T3.2 — Audio-Descripciones Contextuales | FR-302, NFR-301 | ✅ Completada | ██████████ 100% |
 | T3.3 — Integración TalkBack/VoiceOver | FR-303, NFR-302 | ✅ Completada | ██████████ 100% |
 | T3.4 — Evaluación de Riesgos Detallada | FR-304 | ✅ Completada | ██████████ 100% |
-| T3.5 — Perfil de Accesibilidad Visual | FR-305, NFR-302 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
+| T3.5 — Perfil de Accesibilidad Visual | FR-305, NFR-302 | ✅ Completada | ██████████ 100% |
 | T3.6 — Conducción Ósea | FR-306, NFR-303 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
 | T3.7 — Generador IA de Descripciones | FR-307 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
 
-**Progreso global Fase 3:** ██████░░░░ 57% (4/7 tareas)
+**Progreso global Fase 3:** ███████░░░ 71% (5/7 tareas)
 
 ---
 
@@ -46,6 +46,37 @@
 ---
 
 ## Registro de Cambios
+
+### 2026-03-21 — T3.5: Perfil de Accesibilidad Visual [FR-305]
+
+**Categoría:** Implementación
+**Branch:** `fase3/T3.5-accessibility-profile`
+
+#### Cambios realizados:
+
+1. **accessibilityStore.ts** — Zustand store con persistencia AsyncStorage:
+   - Perfiles: "Estándar" y "Discapacidad visual" con defaults automáticos
+   - Preferencias: beacon volume, description frequency, TTS rate/pitch, alto contraste
+   - Audio output type: stereo / bone_conduction (FR-306)
+   - Persistencia automática a `@campus-gps/accessibility-profile`
+   - `loadFromStorage()` para restaurar al iniciar
+
+2. **ProfileSelector.tsx** — Selector de perfil para primer uso:
+   - Dos opciones con iconos, títulos y descripciones en español
+   - Accesibilidad completa (labels, hints, roles)
+
+3. **AccessibilitySettingsScreen.tsx** — Pantalla de configuración completa:
+   - Secciones: Perfil, Audio Beacons, Audio-Descripciones, Voz, Visual, Salida de audio
+   - Todos los controles con `accessibilityLabel`, `accessibilityRole`, `accessibilityState`
+   - Touch targets mínimos 44x44dp
+
+4. **Dependencia** — `@react-native-async-storage/async-storage` instalado
+
+5. **Tests** — 9 tests pasando:
+   - Defaults (1), profile switch (2), persistence (2), load (1), clamping (2), output type (1)
+   - Incluye TST-FR-305-001 y TST-FR-305-002
+
+---
 
 ### 2026-03-21 — T3.3: Integración TalkBack/VoiceOver [FR-303]
 

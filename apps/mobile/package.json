@@ -15,6 +15,7 @@
   "dependencies": {
     "@campus-gps/shared-types": "workspace:*",
     "@maplibre/maplibre-react-native": "^10",
+    "@react-native-async-storage/async-storage": "^3.0.1",
     "expo": "~52.0.0",
     "expo-av": "^16.0.8",
     "expo-location": "~18.0.0",
