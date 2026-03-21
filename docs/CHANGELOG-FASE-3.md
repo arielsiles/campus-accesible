@@ -1,7 +1,7 @@
 # Historial de Cambios — Fase 3: Accesibilidad Visual y Audio 3D
 
 > Registro cronológico de implementación y cambios durante la Fase 3 del proyecto **Campus GPS Accesible**.
-> **Estado:** 🔄 En progreso
+> **Estado:** ✅ Completada
 > **Spec:** `docs/SPEC-FASE-3.md`
 
 ---
@@ -24,9 +24,9 @@
 | T3.4 — Evaluación de Riesgos Detallada | FR-304 | ✅ Completada | ██████████ 100% |
 | T3.5 — Perfil de Accesibilidad Visual | FR-305, NFR-302 | ✅ Completada | ██████████ 100% |
 | T3.6 — Conducción Ósea | FR-306, NFR-303 | ✅ Completada | ██████████ 100% |
-| T3.7 — Generador IA de Descripciones | FR-307 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
+| T3.7 — Generador IA de Descripciones | FR-307 | ✅ Completada | ██████████ 100% |
 
-**Progreso global Fase 3:** ████████░░ 86% (6/7 tareas)
+**Progreso global Fase 3:** ██████████ 100% (7/7 tareas)
 
 ---
 
@@ -46,6 +46,36 @@
 ---
 
 ## Registro de Cambios
+
+### 2026-03-21 — T3.7: Generador IA de Descripciones [FR-307]
+
+**Categoría:** Implementación
+**Branch:** `fase3/T3.7-ai-description-generator`
+
+#### Cambios realizados:
+
+1. **descriptionGenerator.ts** — Servicio de generación de audio-descripciones:
+   - `generateWithAI()` — Genera descripciones via Claude API (Haiku 4.5)
+   - `generateFromTemplate()` — Fallback con plantillas en español
+   - `generateDescription()` — Intenta IA, cae a plantillas si no hay API key
+   - `generateBatch()` — Procesamiento batch para múltiples segmentos
+   - Prompt optimizado: máximo 80 caracteres, español claro, sin tecnicismos
+
+2. **API Endpoint** — `POST /api/routes/generate-descriptions`:
+   - Lee todos los segmentos de la BD
+   - Genera descripciones (IA o plantillas según `ANTHROPIC_API_KEY`)
+   - Actualiza `audioDescription` en cada segmento
+   - Retorna resumen con source (ai/template) por segmento
+
+3. **Configuración** — `ANTHROPIC_API_KEY` en `.env` (vacía por defecto)
+
+4. **Dependencia** — `@anthropic-ai/sdk` instalado en server
+
+5. **Tests** — 9 tests pasando:
+   - Template generation (6), fallback sin API key (2), batch (1)
+   - Incluye TST-FR-307-001 (pendiente test con API real) y TST-FR-307-002
+
+---
 
 ### 2026-03-21 — T3.6: Conducción Ósea [FR-306]
 
