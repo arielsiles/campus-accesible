@@ -23,10 +23,10 @@
 | T3.3 — Integración TalkBack/VoiceOver | FR-303, NFR-302 | ✅ Completada | ██████████ 100% |
 | T3.4 — Evaluación de Riesgos Detallada | FR-304 | ✅ Completada | ██████████ 100% |
 | T3.5 — Perfil de Accesibilidad Visual | FR-305, NFR-302 | ✅ Completada | ██████████ 100% |
-| T3.6 — Conducción Ósea | FR-306, NFR-303 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
+| T3.6 — Conducción Ósea | FR-306, NFR-303 | ✅ Completada | ██████████ 100% |
 | T3.7 — Generador IA de Descripciones | FR-307 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
 
-**Progreso global Fase 3:** ███████░░░ 71% (5/7 tareas)
+**Progreso global Fase 3:** ████████░░ 86% (6/7 tareas)
 
 ---
 
@@ -46,6 +46,27 @@
 ---
 
 ## Registro de Cambios
+
+### 2026-03-21 — T3.6: Conducción Ósea [FR-306]
+
+**Categoría:** Implementación
+**Branch:** `fase3/T3.6-bone-conduction`
+
+#### Cambios realizados:
+
+1. **boneConduction.ts** — Adaptador de salida para auriculares de conducción ósea:
+   - `getConfigForOutputType()` — Config mono (+20% vol) vs estéreo
+   - `applyOutputType()` — Aplica cambios inmediatamente al HRTF engine
+   - `isBoneConductionActive()` — Estado actual del modo
+
+2. **Integración** — Conecta con `audioBeaconEngine.setHRTFConfig()` (T3.1) y
+   `accessibilityStore.audioOutputType` (T3.5) para cambio en tiempo real
+
+3. **Tests** — 7 tests pasando:
+   - Config mono/stereo (2), apply/switch (3), HRTF integration (2)
+   - Incluye TST-FR-306-001 y TST-FR-306-002
+
+---
 
 ### 2026-03-21 — T3.5: Perfil de Accesibilidad Visual [FR-305]
 
