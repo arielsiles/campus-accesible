@@ -19,12 +19,12 @@
 | Tarea | Spec IDs | Estado | Progreso |
 |-------|----------|--------|----------|
 | T4.1 — Perfil Movilidad Reducida | FR-401, NFR-403 | ✅ Completada | ██████████ 100% |
-| T4.2 — Lectura Fácil con IA | FR-402, NFR-402 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
+| T4.2 — Lectura Fácil con IA | FR-402, NFR-402 | ✅ Completada | ██████████ 100% |
 | T4.3 — Vibración Háptica Direccional | FR-403, NFR-401 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
 | T4.4 — Selector Multi-Perfil | FR-404 | ✅ Completada | ██████████ 100% |
 | T4.5 — Pesos de Ruta por Perfil | FR-405 | ✅ Completada | ██████████ 100% |
 
-**Progreso global Fase 4:** ██████░░░░ 60% (3/5 tareas)
+**Progreso global Fase 4:** ████████░░ 80% (4/5 tareas)
 
 ---
 
@@ -43,6 +43,38 @@
 ---
 
 ## Registro de Cambios
+
+### 2026-03-21 — T4.2: Lectura Fácil con IA [FR-402]
+
+**Categoría:** Implementación
+**Branch:** `fase4/T4.4-multi-profile-selector`
+
+#### Cambios realizados:
+
+1. **easyReadService.ts** (server) — Servicio de simplificación:
+   - `simplifyWithAI()` — Simplifica via Claude Haiku 4.5 siguiendo guías Plena Inclusión
+   - `simplifyFromTemplate()` — Fallback con patrones de simplificación
+   - `simplifyText()` — Intenta IA, cae a plantillas si no hay API key
+   - Contextos: navigation, risk, description, general
+
+2. **API Endpoint** — `POST /api/text/easy-read`:
+   - Validación Zod (text, context)
+   - Retorna: original, simplified, source (ai/template)
+
+3. **easyReadAdapter.ts** (mobile) — Adaptador cliente:
+   - `simplifyLocally()` — Simplificación inmediata sin red con regex patterns
+   - `simplifyViaAPI()` — Llama al endpoint con fallback local
+   - `simplifyInstruction()` — Wrapper para instrucciones de navegación
+   - Patrones locales: start, continue, turn, arrive
+
+4. **templates.json** — Plantillas en lectura fácil:
+   - Navegación, riesgos, superficies, barreras de movilidad
+
+5. **Tests** — 15 tests pasando:
+   - `easyReadService.test.ts`: 8 tests (TST-FR-402-002, TST-FR-402-003)
+   - `easyReadAdapter.test.ts`: 7 tests (local patterns, word count ≤10)
+
+---
 
 ### 2026-03-21 — T4.5: Pesos de Ruta por Perfil [FR-405]
 
