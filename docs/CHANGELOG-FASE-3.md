@@ -18,7 +18,7 @@
 
 | Tarea | Spec IDs | Estado | Progreso |
 |-------|----------|--------|----------|
-| T3.1 — Audio Beacons con HRTF | FR-301, NFR-301, NFR-303 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
+| T3.1 — Audio Beacons con HRTF | FR-301, NFR-301, NFR-303 | ✅ Completada | ██████████ 100% |
 | T3.2 — Audio-Descripciones Contextuales | FR-302, NFR-301 | ✅ Completada | ██████████ 100% |
 | T3.3 — Integración TalkBack/VoiceOver | FR-303, NFR-302 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
 | T3.4 — Evaluación de Riesgos Detallada | FR-304 | ✅ Completada | ██████████ 100% |
@@ -26,7 +26,7 @@
 | T3.6 — Conducción Ósea | FR-306, NFR-303 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
 | T3.7 — Generador IA de Descripciones | FR-307 | 🔲 Pendiente | ░░░░░░░░░░ 0% |
 
-**Progreso global Fase 3:** ██░░░░░░░░ 29% (2/7 tareas)
+**Progreso global Fase 3:** ████░░░░░░ 43% (3/7 tareas)
 
 ---
 
@@ -46,6 +46,45 @@
 ---
 
 ## Registro de Cambios
+
+### 2026-03-21 — T3.1: Audio Beacons con HRTF [FR-301]
+
+**Categoría:** Implementación
+**Branch:** `fase3/T3.1-audio-beacons`
+
+#### Cambios realizados:
+
+1. **hrtfProcessor.ts** — Procesador HRTF (Head-Related Transfer Function):
+   - `calculateHRTF()` — Stereo panning por ángulo relativo (seno del ángulo)
+   - Atenuación trasera al 40% para efecto "detrás"
+   - Modo mono para conducción ósea (FR-306) con boost de volumen
+   - `calculateRelativeAngle()` — Ángulo relativo entre heading y bearing
+   - `calculateBearing()` — Bearing geodésico entre dos coordenadas
+
+2. **audioBeaconEngine.ts** — Motor de audio beacon 3D:
+   - `startBeacon()` / `stopBeacon()` — Lifecycle del sonido direccional
+   - Actualización de dirección a 10Hz (100ms) per NFR-301
+   - `updateUserPosition()`, `updateUserHeading()`, `updateTarget()`
+   - Integración con expo-av para stereo pan y volumen dinámico
+
+3. **useCompass.ts** — Hook de brújula via magnetómetro:
+   - Heading normalizado 0-360° (TST-FR-301-003)
+   - Intervalo de actualización 100ms (NFR-301)
+
+4. **useAudioBeacon.ts** — Hook integrador:
+   - Conecta compass + posición + engine
+   - Soporte mono mode para conducción ósea (FR-306)
+   - Polling de estado a 5Hz para UI
+
+5. **beacon.wav** — Sonido de beacon placeholder (440Hz, 0.1s)
+
+6. **Dependencias** — `expo-sensors`, `expo-av` instalados
+
+7. **Tests** — 18 tests pasando:
+   - HRTF direction (8), relative angle (5), bearing (5)
+   - Incluye TST-FR-301-001 y TST-FR-301-003
+
+---
 
 ### 2026-03-21 — T3.2: Audio-Descripciones Contextuales [FR-302]
 
