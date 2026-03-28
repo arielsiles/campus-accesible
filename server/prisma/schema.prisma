@@ -77,8 +77,17 @@ model RouteSegment {
   routeId String @map("route_id")
   route   Route  @relation(fields: [routeId], references: [id], onDelete: Cascade)
 
+  // FR-506: Temporary blocking due to incidents
+  temporarilyBlocked Boolean @default(false) @map("temporarily_blocked")
+  blockReason        String? @map("block_reason")
+
   // FR-201: Graph edges derived from this segment
   graphEdges GraphEdge[]
+
+  // FR-501: Incidents reported on this segment
+  incidents      Incident[]
+  // FR-505: Push notification subscriptions
+  subscriptions  PushSubscription[]
 
   @@map("route_segments")
 }
@@ -141,4 +150,72 @@ enum RiskLevel {
   high
 
   @@map("risk_level")
+}
+
+// FR-501: Incident type categorization
+enum IncidentType {
+  obras
+  obstaculo_temporal
+  superficie_danada
+  ascensor_averiado
+  rampa_bloqueada
+  otro
+
+  @@map("incident_type")
+}
+
+// FR-501: Incident lifecycle status
+enum IncidentStatus {
+  pending
+  validated
+  rejected
+  resolved
+
+  @@map("incident_status")
+}
+
+/// FR-501: User-reported incident on a route segment
+model Incident {
+  id          String         @id @default(cuid())
+  deviceId    String         @map("device_id")
+  type        IncidentType
+  status      IncidentStatus @default(pending)
+  title       String
+  description String
+  latitude    Float
+  longitude   Float
+  photoUrl    String?        @map("photo_url")
+
+  // FR-503: AI validation results
+  aiValidation     Boolean?  @map("ai_validation")
+  aiConfidence     Float?    @map("ai_confidence")
+  aiReason         String?   @map("ai_reason")
+  validationSource String?   @map("validation_source")
+
+  // Linked segment (optional)
+  segmentId   String?        @map("segment_id")
+  segment     RouteSegment?  @relation(fields: [segmentId], references: [id])
+
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  resolvedAt  DateTime?      @map("resolved_at")
+
+  @@index([status])
+  @@index([segmentId])
+  @@index([deviceId])
+  @@map("incidents")
+}
+
+/// FR-505: Push notification subscription
+model PushSubscription {
+  id        String       @id @default(cuid())
+  deviceId  String       @map("device_id")
+  pushToken String       @map("push_token")
+  segmentId String       @map("segment_id")
+  segment   RouteSegment @relation(fields: [segmentId], references: [id])
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  @@unique([deviceId, segmentId])
+  @@index([segmentId])
+  @@map("push_subscriptions")
 }

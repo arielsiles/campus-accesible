@@ -25,6 +25,42 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
+  const url = `${API_BASE_URL}${path}`;
+  const response = await fetch(url, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    const message =
+      data?.error?.message ?? `Request failed with status ${response.status}`;
+    throw new Error(message);
+  }
+
+  return response.json() as Promise<T>;
+}
+
+export async function apiDelete<T>(path: string, body?: unknown): Promise<T> {
+  const url = `${API_BASE_URL}${path}`;
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    ...(body && { body: JSON.stringify(body) }),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    const message =
+      data?.error?.message ?? `Request failed with status ${response.status}`;
+    throw new Error(message);
+  }
+
+  return response.json() as Promise<T>;
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
   const url = `${API_BASE_URL}${path}`;
   const options: RequestOptions = {

@@ -1,4 +1,4 @@
-// FR-003, FR-004, FR-005, FR-206, FR-208: Main map screen with route display, GPS, search, and navigation
+// FR-003, FR-004, FR-005, FR-206, FR-208, FR-502: Main map screen with route display, GPS, search, navigation, and incidents
 import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
@@ -16,12 +16,15 @@ import PermissionRequestModal from "../components/PermissionRequestModal";
 import SearchBar from "../components/SearchBar";
 import SearchResults from "../components/SearchResults";
 import NavigationScreen from "./NavigationScreen";
+import ReportIncidentScreen from "./ReportIncidentScreen";
 import { useMapStore } from "../store/mapStore";
+import { useLocationStore } from "../store/locationStore";
 import { useRoutes } from "../hooks/useRoutes";
 import { useRoute } from "../hooks/useRoute";
 import { useLocation } from "../hooks/useLocation";
 import { useSearch } from "../hooks/useSearch";
 import { useNavigation } from "../hooks/useNavigation";
+import { useIncidents } from "../hooks/useIncidents";
 import { calculateRoute } from "../services/routeCalculationService";
 
 export default function MapScreen() {
@@ -51,6 +54,15 @@ export default function MapScreen() {
   // FR-208: Route calculation loading state
   const [calculatingRoute, setCalculatingRoute] = useState(false);
   const [calcError, setCalcError] = useState<string | null>(null);
+
+  // FR-502: Incident reporting
+  const coords = useLocationStore((s) => s.coords);
+  const { incidents } = useIncidents(
+    coords?.latitude ?? null,
+    coords?.longitude ?? null,
+    1000
+  );
+  const [showReportScreen, setShowReportScreen] = useState(false);
 
   // FR-004: Show permission modal when status is undetermined
   const [showPermissionModal, setShowPermissionModal] = useState(false);
@@ -136,6 +148,17 @@ export default function MapScreen() {
     return <NavigationScreen />;
   }
 
+  // FR-502: When reporting, show ReportIncidentScreen
+  if (showReportScreen && coords) {
+    return (
+      <ReportIncidentScreen
+        latitude={coords.latitude}
+        longitude={coords.longitude}
+        onClose={() => setShowReportScreen(false)}
+      />
+    );
+  }
+
   return (
     <View
       style={styles.container}
@@ -207,6 +230,22 @@ export default function MapScreen() {
             </Text>
           )}
         </View>
+      )}
+
+      {/* FR-502: Report incident FAB */}
+      {permissionStatus === "granted" && !selectedDestination && !showSearchResults && (
+        <TouchableOpacity
+          style={styles.reportFab}
+          onPress={() => setShowReportScreen(true)}
+          accessibilityLabel="Reportar incidencia"
+          accessibilityRole="button"
+          accessibilityHint="Abre el formulario para reportar una incidencia en el campus"
+        >
+          <Text style={styles.reportFabIcon} accessibilityElementsHidden>
+            ⚠️
+          </Text>
+          <Text style={styles.reportFabText}>Reportar</Text>
+        </TouchableOpacity>
       )}
 
       <PermissionRequestModal
@@ -353,6 +392,33 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
+    color: "#ffffff",
+  },
+  reportFab: {
+    position: "absolute",
+    bottom: 32,
+    right: 16,
+    zIndex: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#ea4335",
+    borderRadius: 28,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    minHeight: 48,
+    gap: 8,
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+  },
+  reportFabIcon: {
+    fontSize: 18,
+  },
+  reportFabText: {
+    fontSize: 15,
+    fontWeight: "600",
     color: "#ffffff",
   },
 });

@@ -206,10 +206,14 @@ export async function calculateRoute(
   });
 
   // FR-405: Apply profile-based weight multipliers
+  // FR-506: Respect temporarily blocked segments
   const edges: GraphEdgeInput[] = graphEdges.map((e) => {
     let weight = e.weight;
 
-    if (e.segment && profile !== "standard") {
+    // FR-506: Blocked segments get extremely high weight (effectively avoided)
+    if (e.segment?.temporarilyBlocked) {
+      weight = 999999;
+    } else if (e.segment && profile !== "standard") {
       const segData: SegmentData = {
         hasStairs: e.segment.hasStairs,
         maxSlope: e.segment.maxSlope,

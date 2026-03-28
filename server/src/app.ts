@@ -6,6 +6,9 @@ import { routeRoutes } from "./routes/routes";
 import { calculateRoutes } from "./routes/calculate";
 import { waypointRoutes } from "./routes/waypoints";
 import { easyReadRoutes } from "./routes/easyRead";
+import { incidentRoutes } from "./routes/incidents";
+import { segmentRoutes } from "./routes/segments";
+import { notificationRoutes } from "./routes/notifications";
 
 const app = new Hono();
 
@@ -23,6 +26,9 @@ app.route("/api", routeRoutes);
 app.route("/api", calculateRoutes);
 app.route("/api", waypointRoutes);
 app.route("/api", easyReadRoutes);
+app.route("/api", incidentRoutes);
+app.route("/api", segmentRoutes);
+app.route("/api", notificationRoutes);
 
 // 404 handler
 app.notFound((c) => {

@@ -46,6 +46,19 @@ export type {
 } from "./mobility";
 export { MOBILITY_BARRIER_LABELS, SURFACE_QUALITY_LABELS } from "./mobility";
 
+// FR-501: Incident types
+export type {
+  IncidentType,
+  IncidentStatus,
+  IncidentSummary,
+  IncidentDetail,
+  CreateIncidentRequest,
+  UpdateIncidentStatusRequest,
+  IncidentValidationResult,
+  PushSubscriptionRequest,
+} from "./incident";
+export { INCIDENT_TYPE_LABELS, INCIDENT_STATUS_LABELS } from "./incident";
+
 // FR-204, FR-207: Navigation types
 export type {
   RouteCalculationRequest,

@@ -21,6 +21,8 @@ const coords = {
 
 async function main() {
   // Clean existing data (order matters for FK constraints)
+  await prisma.pushSubscription.deleteMany();
+  await prisma.incident.deleteMany();
   await prisma.graphEdge.deleteMany();
   await prisma.routeSegment.deleteMany();
   await prisma.waypoint.deleteMany();
@@ -460,12 +462,66 @@ async function main() {
   // FR-201: Build route graph from all routes
   const graphResult = await buildGraph(prisma);
 
+  // FR-501: Seed sample incidents
+  const incident1 = await prisma.incident.create({
+    data: {
+      deviceId: "seed-device-001",
+      type: "obras",
+      status: "validated",
+      title: "Obras en acera de Odontología",
+      description: "Obras de reparación de acera que obligan a caminar por la calzada",
+      latitude: 40.4479,
+      longitude: -3.7258,
+      segmentId: "seg-odonto-farmacia",
+      aiValidation: true,
+      aiConfidence: 0.92,
+      aiReason: "Ubicación válida en campus, descripción coherente con tipo 'obras'",
+      validationSource: "ai",
+    },
+  });
+
+  const incident2 = await prisma.incident.create({
+    data: {
+      deviceId: "seed-device-002",
+      type: "ascensor_averiado",
+      status: "pending",
+      title: "Ascensor Metro CU averiado",
+      description: "El ascensor de la estación de Metro Ciudad Universitaria no funciona desde esta mañana",
+      latitude: 40.4449,
+      longitude: -3.7302,
+      segmentId: "seg-bus-metro",
+      aiValidation: true,
+      aiConfidence: 0.85,
+      aiReason: "Incidencia plausible, ubicación cercana a Metro CU",
+      validationSource: "ai",
+    },
+  });
+
+  const incident3 = await prisma.incident.create({
+    data: {
+      deviceId: "seed-device-003",
+      type: "superficie_danada",
+      status: "resolved",
+      title: "Baldosas sueltas en Físicas",
+      description: "Varias baldosas sueltas en el camino entre Matemáticas y Físicas, riesgo de tropiezo",
+      latitude: 40.4496,
+      longitude: -3.7245,
+      segmentId: "seg-mates-fisicas",
+      aiValidation: true,
+      aiConfidence: 0.78,
+      aiReason: "Descripción coherente con superficie dañada en zona conocida",
+      validationSource: "ai",
+      resolvedAt: new Date("2026-03-25"),
+    },
+  });
+
   console.log(
     `Seed complete:\n` +
       `  Route 1: "${route1.name}" — ${route1.waypoints.length} waypoints, ${route1.segments.length} segments\n` +
       `  Route 2: "${route2.name}" — ${route2.waypoints.length} waypoints, ${route2.segments.length} segments\n` +
       `  Route 3: "${route3.name}" — ${route3.waypoints.length} waypoints, ${route3.segments.length} segments\n` +
-      `  Graph: ${graphResult.nodesCount} nodes, ${graphResult.edgesCount} edges`
+      `  Graph: ${graphResult.nodesCount} nodes, ${graphResult.edgesCount} edges\n` +
+      `  Incidents: 3 (1 validated, 1 pending, 1 resolved)`
   );
 }
 
