@@ -1,5 +1,5 @@
 // FR-305, FR-404: Accessibility store tests
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Mock AsyncStorage
 vi.mock("@react-native-async-storage/async-storage", () => ({
@@ -12,7 +12,9 @@ vi.mock("@react-native-async-storage/async-storage", () => ({
 import { useAccessibilityStore } from "./accessibilityStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+// FR-601: Use fake timers to test debounced persistence
 beforeEach(() => {
+  vi.useFakeTimers();
   vi.clearAllMocks();
   // Reset store to defaults
   useAccessibilityStore.setState({
@@ -35,6 +37,10 @@ beforeEach(() => {
     maxSlopePercent: 8,
     minPathWidth: 1.5,
   });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("accessibilityStore [FR-305]", () => {
@@ -144,6 +150,8 @@ describe("accessibilityStore [FR-305]", () => {
   it("updates individual preferences and persists", () => {
     useAccessibilityStore.getState().setDescriptionFrequency("full");
     expect(useAccessibilityStore.getState().descriptionFrequency).toBe("full");
+    // FR-601: Persistence is debounced — advance timer to trigger write
+    vi.advanceTimersByTime(600);
     expect(AsyncStorage.setItem).toHaveBeenCalled();
   });
 

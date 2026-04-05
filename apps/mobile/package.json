@@ -9,6 +9,7 @@
     "ios": "expo run:ios",
     "build": "echo 'Mobile build handled by EAS'",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit"
   },

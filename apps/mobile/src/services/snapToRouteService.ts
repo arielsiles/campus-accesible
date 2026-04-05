@@ -91,8 +91,18 @@ export function snapToRoute(
   let bestSegmentIndex = 0;
   let bestProgress = 0;
 
+  // FR-601: Early exit threshold — skip segments whose start is far away
+  const EARLY_EXIT_M = 200;
+
   for (let segIdx = 0; segIdx < segments.length; segIdx++) {
     const coords = segments[segIdx];
+
+    // FR-601: Quick bounding box check — skip far segments
+    if (coords.length > 0 && bestDistance < EARLY_EXIT_M) {
+      const startDist = haversineDistance(gpsPosition, coords[0]);
+      if (startDist > bestDistance + EARLY_EXIT_M) continue;
+    }
+
     for (let i = 0; i < coords.length - 1; i++) {
       const projected = projectPointToSegment(
         gpsPosition,
@@ -106,10 +116,17 @@ export function snapToRoute(
         bestPoint = projected;
         bestSegmentIndex = segIdx;
 
-        // Calculate progress within this sub-segment
-        const segLength = haversineDistance(coords[i], coords[i + 1]);
-        const progressDist = haversineDistance(coords[i], projected);
-        bestProgress = segLength > 0 ? progressDist / segLength : 0;
+        // FR-601: Calculate progress using projection parameter directly
+        // instead of double haversine call
+        const [ax, ay] = coords[i];
+        const [bx, by] = coords[i + 1];
+        const [px, py] = projected;
+        const segDx = bx - ax;
+        const segDy = by - ay;
+        const segLenSq = segDx * segDx + segDy * segDy;
+        bestProgress = segLenSq > 0
+          ? Math.sqrt(((px - ax) ** 2 + (py - ay) ** 2) / segLenSq)
+          : 0;
       }
     }
   }

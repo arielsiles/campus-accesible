@@ -89,10 +89,14 @@ docs/               → Specs, setup guide, governance
 
 ## Current Phase
 
-**Fase 5: Sistema Colaborativo e Incidencias**
+**Fase 6: Optimizacion, Escalabilidad y Lanzamiento**
+- Spec: `docs/SPEC-FASE-6.md`
+- Changelog: `docs/CHANGELOG-FASE-6.md`
+- Governance: `docs/GOBERNANZA-PROYECTO.md`
+
+**Fase 5: Sistema Colaborativo e Incidencias** ✅ Completada
 - Spec: `docs/SPEC-FASE-5.md`
 - Changelog: `docs/CHANGELOG-FASE-5.md`
-- Governance: `docs/GOBERNANZA-PROYECTO.md`
 
 **Fase 4: Perfiles Adicionales de Accesibilidad** ✅ Completada
 - Spec: `docs/SPEC-FASE-4.md`

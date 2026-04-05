@@ -154,6 +154,18 @@ function getProfileDefaults(profile: AccessibilityProfile) {
   }
 }
 
+// FR-601: Debounce timer for batching AsyncStorage writes
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
+const PERSIST_DEBOUNCE_MS = 500;
+
+function debouncedPersist(state: Partial<AccessibilityState>): void {
+  if (persistTimer) clearTimeout(persistTimer);
+  persistTimer = setTimeout(() => {
+    persistState(state);
+    persistTimer = null;
+  }, PERSIST_DEBOUNCE_MS);
+}
+
 // FR-305: Persist state to AsyncStorage
 async function persistState(state: Partial<AccessibilityState>): Promise<void> {
   try {
@@ -207,87 +219,88 @@ export const useAccessibilityStore = create<AccessibilityState>((set, get) => ({
     const defaults = getProfileDefaults(profile);
     const newState = { profile, isProfileSelected: true, ...defaults };
     set(newState);
+    // FR-601: Profile changes persist immediately (infrequent, high-importance)
     persistState({ ...get(), ...newState });
   },
 
   setAudioBeaconEnabled: (enabled) => {
     set({ audioBeaconEnabled: enabled });
-    persistState(get());
+    debouncedPersist(get());
   },
 
   setBeaconVolume: (volume) => {
     set({ beaconVolume: Math.max(0, Math.min(1, volume)) });
-    persistState(get());
+    debouncedPersist(get());
   },
 
   setAudioDescriptionsEnabled: (enabled) => {
     set({ audioDescriptionsEnabled: enabled });
-    persistState(get());
+    debouncedPersist(get());
   },
 
   setDescriptionFrequency: (frequency) => {
     set({ descriptionFrequency: frequency });
-    persistState(get());
+    debouncedPersist(get());
   },
 
   setTtsEnabled: (enabled) => {
     set({ ttsEnabled: enabled });
-    persistState(get());
+    debouncedPersist(get());
   },
 
   setTtsRate: (rate) => {
     set({ ttsRate: Math.max(0.5, Math.min(2.0, rate)) });
-    persistState(get());
+    debouncedPersist(get());
   },
 
   setTtsPitch: (pitch) => {
     set({ ttsPitch: Math.max(0.5, Math.min(2.0, pitch)) });
-    persistState(get());
+    debouncedPersist(get());
   },
 
   setHighContrastEnabled: (enabled) => {
     set({ highContrastEnabled: enabled });
-    persistState(get());
+    debouncedPersist(get());
   },
 
   setAudioOutputType: (type) => {
     set({ audioOutputType: type });
-    persistState(get());
+    debouncedPersist(get());
   },
 
   setHapticEnabled: (enabled) => {
     set({ hapticEnabled: enabled });
-    persistState(get());
+    debouncedPersist(get());
   },
 
   setEasyReadEnabled: (enabled) => {
     set({ easyReadEnabled: enabled });
-    persistState(get());
+    debouncedPersist(get());
   },
 
   setLargeFontEnabled: (enabled) => {
     set({ largeFontEnabled: enabled });
-    persistState(get());
+    debouncedPersist(get());
   },
 
   setMobilityBarriersEnabled: (enabled) => {
     set({ mobilityBarriersEnabled: enabled });
-    persistState(get());
+    debouncedPersist(get());
   },
 
   setAvoidStairs: (avoid) => {
     set({ avoidStairs: avoid });
-    persistState(get());
+    debouncedPersist(get());
   },
 
   setMaxSlopePercent: (percent) => {
     set({ maxSlopePercent: Math.max(1, Math.min(20, percent)) });
-    persistState(get());
+    debouncedPersist(get());
   },
 
   setMinPathWidth: (width) => {
     set({ minPathWidth: Math.max(0.5, Math.min(3.0, width)) });
-    persistState(get());
+    debouncedPersist(get());
   },
 
   loadFromStorage: async () => {
