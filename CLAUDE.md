@@ -94,7 +94,7 @@ docs/               → Specs, setup guide, governance
 - Changelog: `docs/CHANGELOG-FASE-7.md`
 - Governance: `docs/GOBERNANZA-PROYECTO.md`
 
-**Fase 8: Integracion Activa con OpenStreetMap** (siguiente)
+**Fase 8: Integracion Activa con OpenStreetMap**
 - Spec: `docs/SPEC-FASE-8.md`
 - Changelog: `docs/CHANGELOG-FASE-8.md`
 

@@ -1,5 +1,5 @@
-// FR-701: Route recorder screen — GPS track recording with waypoint marking
-import React, { useEffect, useState, useCallback } from "react";
+// FR-701, FR-803: Route recorder screen — GPS track recording with OSM suggestions
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -11,8 +11,15 @@ import {
 import MapView from "../components/MapView";
 import UserLocationMarker from "../components/UserLocationMarker";
 import RecordingControls from "../components/RecordingControls";
+import WaypointSuggestionComponent from "../components/WaypointSuggestion";
 import { useRouteCreatorStore } from "../store/routeCreatorStore";
 import { useLocationStore } from "../store/locationStore";
+import {
+  checkForSuggestion,
+  dismissSuggestion,
+  resetSuggestions,
+} from "../services/waypointSuggestionService";
+import type { WaypointSuggestion } from "../services/waypointSuggestionService";
 import {
   startTrackRecording,
   stopTrackRecording,
@@ -57,6 +64,10 @@ export default function RouteRecorderScreen({
   const [wpType, setWpType] = useState("landmark");
   const [error, setError] = useState<string | null>(null);
 
+  // FR-803: OSM waypoint suggestions
+  const [suggestion, setSuggestion] = useState<WaypointSuggestion | null>(null);
+  const suggestionCheckRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   // Timer
   useEffect(() => {
     if (!isRecording || isPaused || !startTime) return;
@@ -68,11 +79,27 @@ export default function RouteRecorderScreen({
 
   // Start recording on mount
   useEffect(() => {
+    resetSuggestions();
     startTrackRecording().then((ok) => {
       if (!ok) setError("No se pudo acceder al GPS. Verifica los permisos.");
     });
+
+    // FR-803: Periodically check for OSM waypoint suggestions (every 5s)
+    suggestionCheckRef.current = setInterval(async () => {
+      const currentCoords = useLocationStore.getState().coords;
+      const currentWps = useRouteCreatorStore.getState().waypoints;
+      if (!currentCoords || !useRouteCreatorStore.getState().isRecording) return;
+
+      const found = await checkForSuggestion(
+        currentCoords.latitude,
+        currentCoords.longitude,
+        currentWps.map((w) => w.name)
+      );
+      setSuggestion(found);
+    }, 5000);
+
     return () => {
-      // Cleanup if unmounted while recording
+      if (suggestionCheckRef.current) clearInterval(suggestionCheckRef.current);
       if (useRouteCreatorStore.getState().isRecording) {
         stopTrackRecording();
       }
@@ -115,6 +142,25 @@ export default function RouteRecorderScreen({
     generateSegments();
     onFinish();
   }, [waypoints.length, generateSegments, onFinish]);
+
+  // FR-803: Accept OSM suggestion as waypoint
+  const handleAcceptSuggestion = useCallback((s: WaypointSuggestion) => {
+    addWaypoint({
+      id: "",
+      name: s.name,
+      description: `Detectado via OpenStreetMap`,
+      waypointType: s.waypointType,
+      latitude: s.latitude,
+      longitude: s.longitude,
+      orderIndex: 0,
+    });
+    setSuggestion(null);
+  }, [addWaypoint]);
+
+  const handleDismissSuggestion = useCallback((osmId: number) => {
+    dismissSuggestion(osmId);
+    setSuggestion(null);
+  }, []);
 
   const handleCancel = useCallback(() => {
     stopTrackRecording();
@@ -162,6 +208,17 @@ export default function RouteRecorderScreen({
           >
             <Text style={styles.errorDismiss}>✕</Text>
           </TouchableOpacity>
+        </View>
+      )}
+
+      {/* FR-803: OSM waypoint suggestion */}
+      {suggestion && (
+        <View style={styles.suggestionContainer}>
+          <WaypointSuggestionComponent
+            suggestion={suggestion}
+            onAccept={handleAcceptSuggestion}
+            onDismiss={handleDismissSuggestion}
+          />
         </View>
       )}
 
@@ -285,6 +342,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   cancelText: { color: "#fff", fontSize: 14, fontWeight: "600" },
+  suggestionContainer: {
+    position: "absolute",
+    bottom: 180,
+    left: 16,
+    right: 16,
+    zIndex: 10,
+  },
   controlsContainer: {
     position: "absolute",
     bottom: 0,
