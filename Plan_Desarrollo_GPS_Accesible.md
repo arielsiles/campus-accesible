@@ -234,14 +234,86 @@ El desarrollo se estructura en **6 fases progresivas**. Cada fase produce un ent
 **Objetivo:** Preparar la app para produccion y facilitar la expansion a otros campus.
 
 **Tareas:**
-- [ ] Optimizacion de rendimiento (battery, GPS, audio)
-- [ ] Tests de accesibilidad automatizados con React Native AMA
-- [ ] Documentacion completa para anadir nuevas rutas
-- [ ] Sistema de exportacion/importacion de campus (para replicar en otras universidades)
-- [ ] Publicacion en App Store y Google Play
-- [ ] Auditoria de accesibilidad WCAG 2.1 AA
+- [x] Optimizacion de rendimiento (battery, GPS, audio)
+- [x] Tests de accesibilidad automatizados
+- [x] Documentacion completa para anadir nuevas rutas
+- [x] Sistema de exportacion/importacion de campus (para replicar en otras universidades)
+- [x] Auditoria de accesibilidad WCAG 2.1 AA
 
-> **Entregable:** Version 1.0 publicada en tiendas.
+> **Entregable:** App optimizada con sistema de replicacion. ✅ Completada
+
+---
+
+### FASE 7: Herramienta de Creacion de Rutas (Semanas 31-36)
+
+**Objetivo:** Los usuarios pueden crear rutas directamente desde la app, caminando por el lugar y grabando el trazado GPS.
+
+**Tareas:**
+- [ ] Modo "Grabacion GPS": caminar y grabar track con marcado de waypoints
+- [ ] Modo "Edicion en mapa": colocar y ajustar puntos tocando el mapa
+- [ ] Formulario de anotacion de segmentos (superficie, ancho, escaleras, riesgos)
+- [ ] Vista previa y validacion de ruta antes de subir
+- [ ] API de creacion de rutas (POST/PUT/DELETE /api/routes)
+- [ ] Reconstruccion automatica del grafo tras crear/editar ruta
+- [ ] Store de grabacion con estado del track en tiempo real
+
+**Rol de la IA en esta fase:**
+- Claude genera auto-descripciones para los segmentos a partir de los datos anotados
+- Sugiere tipos de waypoint basandose en la ubicacion
+
+> **Entregable:** Cualquier usuario puede crear rutas funcionales caminando por un espacio.
+
+---
+
+### FASE 8: Integracion Activa con OpenStreetMap (Semanas 37-40)
+
+**Objetivo:** Aprovechar los datos de OSM para acelerar la creacion de rutas y enriquecer la informacion del mapa.
+
+**Tareas:**
+- [ ] Integracion con Overpass API para consultar edificios, caminos y paradas cercanos
+- [ ] Geocodificacion con Nominatim (buscar por nombre → coordenadas)
+- [ ] Auto-sugerencia de waypoints desde datos OSM al grabar rutas
+- [ ] Pre-poblado de segmentos usando caminos peatonales de OSM (highway=footway)
+- [ ] Enriquecimiento de POIs: horarios, tipo de edificio, servicios disponibles
+- [ ] Cache offline de datos OSM por zona
+
+**Referencia: Overpass Turbo**
+> La API de Overpass permite consultas geoespaciales sobre datos OSM en tiempo real. Por ejemplo: "todos los edificios dentro de 500m de mi posicion" o "todos los caminos peatonales en esta area".
+
+> **Entregable:** Creacion de rutas asistida por datos OSM, reduciendo tiempo de campo a la mitad.
+
+---
+
+### FASE 9: Multi-Campus y Comunidad (Semanas 41-46)
+
+**Objetivo:** Soportar multiples ubicaciones y contribuciones comunitarias con moderacion.
+
+**Tareas:**
+- [ ] Autenticacion de usuarios (registro/login con email o social)
+- [ ] Pantalla de seleccion de campus al iniciar la app
+- [ ] Descubrimiento de campus: lista de ubicaciones publicas
+- [ ] Roles de usuario: creador de rutas, revisor, administrador
+- [ ] Workflow de moderacion: rutas pendientes → revision → publicacion
+- [ ] Estadisticas por campus: rutas, usuarios, cobertura de accesibilidad
+- [ ] Perfil de usuario con historial de contribuciones
+
+> **Entregable:** Plataforma multi-campus con contribuciones comunitarias moderadas.
+
+---
+
+### FASE 10: Financiamiento y Lanzamiento Publico (Semanas 47-52)
+
+**Objetivo:** Preparar el proyecto para financiamiento y publicacion en tiendas.
+
+**Tareas:**
+- [ ] Dashboard de metricas de impacto (rutas, usuarios, incidencias resueltas)
+- [ ] Cumplimiento EN 301 549 (directiva europea de accesibilidad digital)
+- [ ] Pitch deck y materiales de presentacion
+- [ ] Partnership con universidad piloto (UCM)
+- [ ] Publicacion en App Store y Google Play
+- [ ] Documentacion de API publica para integraciones de terceros
+
+> **Entregable:** Version 1.0 publicada en tiendas con metricas de impacto para financiadores.
 
 ---
 
@@ -389,24 +461,38 @@ La recomendacion es la **Estrategia C** (Desarrollo nuevo con componentes open s
 
 ## 8. ROADMAP Y ESTIMACIONES
 
+### 8.1 Fases Core (Completadas)
+
+| Fase | Descripcion | Duracion | Estado |
+|------|------------|----------|--------|
+| **Fase 1** | Fundacion y prototipo basico | 4 semanas | ✅ Completada |
+| **Fase 2** | Motor de navegacion y routing | 4 semanas | ✅ Completada |
+| **Fase 3** | Accesibilidad visual y audio 3D | 6 semanas | ✅ Completada |
+| **Fase 4** | Perfiles adicionales de accesibilidad | 6 semanas | ✅ Completada |
+| **Fase 5** | Sistema colaborativo e incidencias | 4 semanas | ✅ Completada |
+| **Fase 6** | Optimizacion y escalabilidad | 6 semanas | ✅ Completada |
+
+### 8.2 Fases de Crecimiento (Nuevas)
+
 | Fase | Descripcion | Duracion | Prioridad |
 |------|------------|----------|-----------|
-| **Fase 1** | Fundacion y prototipo basico | 4 semanas | Critica |
-| **Fase 2** | Motor de navegacion y routing | 4 semanas | Critica |
-| **Fase 3** | Accesibilidad visual y audio 3D | 6 semanas | Critica |
-| **Fase 4** | Perfiles adicionales de accesibilidad | 6 semanas | Alta |
-| **Fase 5** | Sistema colaborativo e incidencias | 4 semanas | Media |
-| **Fase 6** | Optimizacion y lanzamiento | 6 semanas | Alta |
+| **Fase 7** | Herramienta de creacion de rutas in-app | 6 semanas | **Critica** |
+| **Fase 8** | Integracion activa con OpenStreetMap | 4 semanas | Alta |
+| **Fase 9** | Multi-campus y comunidad | 6 semanas | Alta |
+| **Fase 10** | Financiamiento y lanzamiento publico | 6 semanas | Alta |
 
-> **Tiempo total estimado:** 30 semanas (~7.5 meses) con un desarrollador + agentes IA.
-> Con un equipo de 2-3 personas + IA, se puede reducir a **4-5 meses**.
+> **Fases 1-6:** 30 semanas completadas.
+> **Fases 7-10:** 22 semanas estimadas (~5.5 meses adicionales).
+> **Total del proyecto:** 52 semanas (~12 meses) con un desarrollador + agentes IA.
 
-### Consideraciones Importantes
+### 8.3 Consideraciones Importantes
 
-- **Levantamiento topografico:** Es trabajo de campo que no puede hacer la IA. Necesita equipo topografico profesional y tiempo dedicado. Se puede paralelizar con el desarrollo.
-- **Tests con usuarios reales:** Indispensable. Cada fase debe incluir pruebas con personas de los perfiles objetivo, especialmente fase 3 y 4.
-- **Sostenibilidad:** El documento enfatiza actualizaciones anuales minimas. Disenar desde el inicio un sistema de mantenimiento de datos.
-- **Regulaciones:** Verificar cumplimiento de la normativa espanola/europea de accesibilidad digital (EN 301 549).
+- **Fase 7 es el desbloqueante clave:** Sin ella, crear rutas requiere edicion manual de JSON. Con ella, cualquier persona puede crear rutas caminando por un lugar.
+- **Levantamiento topografico:** Con la Fase 7, el levantamiento se integra en la propia app. No se necesita equipo topografico profesional para precision a nivel peatonal (3-5m GPS es suficiente con snap-to-route).
+- **Tests con usuarios reales:** Fase 7 permite pruebas de campo inmediatas en cualquier espacio (parque, centro comercial, otro campus).
+- **OpenStreetMap (Fase 8):** Acelera la creacion de rutas pero no la bloquea. La Fase 7 funciona sin OSM.
+- **Financiamiento (Fase 10):** Requiere demo funcional con datos reales. Fases 7+8 proporcionan esa demo.
+- **Regulaciones:** EN 301 549 (directiva europea de accesibilidad digital) se cumple desde Fase 6 (auditoria WCAG 2.1 AA).
 
 ---
 

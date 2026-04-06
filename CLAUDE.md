@@ -89,10 +89,26 @@ docs/               → Specs, setup guide, governance
 
 ## Current Phase
 
-**Fase 6: Optimizacion, Escalabilidad y Lanzamiento**
+**Fase 7: Herramienta de Creacion de Rutas**
+- Spec: `docs/SPEC-FASE-7.md`
+- Changelog: `docs/CHANGELOG-FASE-7.md`
+- Governance: `docs/GOBERNANZA-PROYECTO.md`
+
+**Fase 8: Integracion Activa con OpenStreetMap** (siguiente)
+- Spec: `docs/SPEC-FASE-8.md`
+- Changelog: `docs/CHANGELOG-FASE-8.md`
+
+**Fase 9: Multi-Campus y Comunidad** (planificada)
+- Spec: `docs/SPEC-FASE-9.md`
+- Changelog: `docs/CHANGELOG-FASE-9.md`
+
+**Fase 10: Financiamiento y Lanzamiento Publico** (planificada)
+- Spec: `docs/SPEC-FASE-10.md`
+- Changelog: `docs/CHANGELOG-FASE-10.md`
+
+**Fase 6: Optimizacion, Escalabilidad y Lanzamiento** ✅ Completada
 - Spec: `docs/SPEC-FASE-6.md`
 - Changelog: `docs/CHANGELOG-FASE-6.md`
-- Governance: `docs/GOBERNANZA-PROYECTO.md`
 
 **Fase 5: Sistema Colaborativo e Incidencias** ✅ Completada
 - Spec: `docs/SPEC-FASE-5.md`
