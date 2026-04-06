@@ -179,6 +179,36 @@
 
 ---
 
+### 2026-04-06 — Fixes de Pruebas de Campo
+
+**Categoria:** Fix
+
+#### Cambios realizados:
+
+1. **MapScreen.tsx** — Auto-centrar mapa en GPS:
+   - El mapa se centra automaticamente en la posicion GPS del usuario
+   - Ya no se queda fijo en Ciudad Universitaria
+
+2. **MapScreen.tsx** — Selector de rutas:
+   - Nuevo boton "Rutas (N)" (gris) para ver y cambiar entre rutas
+   - Lista desplegable con todas las rutas disponibles
+
+3. **MapScreen.tsx** — FABs sin requerir GPS:
+   - Los botones Grabar/Editar/Reportar aparecen siempre
+   - El permiso GPS se pide al iniciar grabacion, no antes
+
+4. **apiClient.ts** — Soporte ngrok:
+   - Header ngrok-skip-browser-warning para tunnels
+   - URL configurable para acceso externo
+
+5. **server/index.ts** — Bind a 0.0.0.0 para acceso externo
+
+6. **seed.ts** — Fix FK de incidencias:
+   - Lookup de segmentos por segmentId antes de crear incidencias
+   - Resuelve error P2003 de FK constraint
+
+---
+
 ## Mapa de Arquitectura — Fase 7
 
 ```
