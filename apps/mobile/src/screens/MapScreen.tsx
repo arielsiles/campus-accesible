@@ -17,6 +17,10 @@ import SearchBar from "../components/SearchBar";
 import SearchResults from "../components/SearchResults";
 import NavigationScreen from "./NavigationScreen";
 import ReportIncidentScreen from "./ReportIncidentScreen";
+import RouteRecorderScreen from "./RouteRecorderScreen";
+import SegmentAnnotatorScreen from "./SegmentAnnotatorScreen";
+import RoutePreviewScreen from "./RoutePreviewScreen";
+import { useRouteCreatorStore } from "../store/routeCreatorStore";
 import { useMapStore } from "../store/mapStore";
 import { useLocationStore } from "../store/locationStore";
 import { useRoutes } from "../hooks/useRoutes";
@@ -63,6 +67,10 @@ export default function MapScreen() {
     1000
   );
   const [showReportScreen, setShowReportScreen] = useState(false);
+
+  // FR-701: Route creation flow
+  type CreatorStep = "idle" | "recording" | "annotating" | "preview";
+  const [creatorStep, setCreatorStep] = useState<CreatorStep>("idle");
 
   // FR-004: Show permission modal when status is undetermined
   const [showPermissionModal, setShowPermissionModal] = useState(false);
@@ -148,6 +156,40 @@ export default function MapScreen() {
     return <NavigationScreen />;
   }
 
+  // FR-701: Route creation flow
+  if (creatorStep === "recording") {
+    return (
+      <RouteRecorderScreen
+        onFinish={() => setCreatorStep("annotating")}
+        onCancel={() => {
+          useRouteCreatorStore.getState().reset();
+          setCreatorStep("idle");
+        }}
+      />
+    );
+  }
+
+  if (creatorStep === "annotating") {
+    return (
+      <SegmentAnnotatorScreen
+        onFinish={() => setCreatorStep("preview")}
+        onBack={() => setCreatorStep("recording")}
+      />
+    );
+  }
+
+  if (creatorStep === "preview") {
+    return (
+      <RoutePreviewScreen
+        onDone={() => {
+          useRouteCreatorStore.getState().reset();
+          setCreatorStep("idle");
+        }}
+        onBack={() => setCreatorStep("annotating")}
+      />
+    );
+  }
+
   // FR-502: When reporting, show ReportIncidentScreen
   if (showReportScreen && coords) {
     return (
@@ -230,6 +272,22 @@ export default function MapScreen() {
             </Text>
           )}
         </View>
+      )}
+
+      {/* FR-701: Create route FAB */}
+      {permissionStatus === "granted" && !selectedDestination && !showSearchResults && (
+        <TouchableOpacity
+          style={styles.createRouteFab}
+          onPress={() => setCreatorStep("recording")}
+          accessibilityLabel="Crear nueva ruta"
+          accessibilityRole="button"
+          accessibilityHint="Abre la grabacion GPS para crear una ruta caminando"
+        >
+          <Text style={styles.createRouteFabIcon} accessibilityElementsHidden>
+            🗺️
+          </Text>
+          <Text style={styles.createRouteFabText}>Crear ruta</Text>
+        </TouchableOpacity>
       )}
 
       {/* FR-502: Report incident FAB */}
@@ -392,6 +450,33 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
+    color: "#ffffff",
+  },
+  createRouteFab: {
+    position: "absolute",
+    bottom: 96,
+    right: 16,
+    zIndex: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1a73e8",
+    borderRadius: 28,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    minHeight: 48,
+    gap: 8,
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+  },
+  createRouteFabIcon: {
+    fontSize: 18,
+  },
+  createRouteFabText: {
+    fontSize: 15,
+    fontWeight: "600",
     color: "#ffffff",
   },
   reportFab: {

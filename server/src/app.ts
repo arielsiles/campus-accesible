@@ -11,6 +11,7 @@ import { segmentRoutes } from "./routes/segments";
 import { notificationRoutes } from "./routes/notifications";
 import { campusExportRoutes } from "./routes/campusExport";
 import { campusImportRoutes } from "./routes/campusImport";
+import { routeManagementRoutes } from "./routes/routeManagement";
 
 const app = new Hono();
 
@@ -33,6 +34,7 @@ app.route("/api", segmentRoutes);
 app.route("/api", notificationRoutes);
 app.route("/api", campusExportRoutes);
 app.route("/api", campusImportRoutes);
+app.route("/api", routeManagementRoutes);
 
 // 404 handler
 app.notFound((c) => {
