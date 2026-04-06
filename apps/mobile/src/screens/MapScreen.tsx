@@ -18,6 +18,7 @@ import SearchResults from "../components/SearchResults";
 import NavigationScreen from "./NavigationScreen";
 import ReportIncidentScreen from "./ReportIncidentScreen";
 import RouteRecorderScreen from "./RouteRecorderScreen";
+import RouteEditorScreen from "./RouteEditorScreen";
 import SegmentAnnotatorScreen from "./SegmentAnnotatorScreen";
 import RoutePreviewScreen from "./RoutePreviewScreen";
 import { useRouteCreatorStore } from "../store/routeCreatorStore";
@@ -69,7 +70,7 @@ export default function MapScreen() {
   const [showReportScreen, setShowReportScreen] = useState(false);
 
   // FR-701: Route creation flow
-  type CreatorStep = "idle" | "recording" | "annotating" | "preview";
+  type CreatorStep = "idle" | "recording" | "editing" | "annotating" | "preview";
   const [creatorStep, setCreatorStep] = useState<CreatorStep>("idle");
 
   // FR-004: Show permission modal when status is undetermined
@@ -154,6 +155,20 @@ export default function MapScreen() {
   // FR-208: When navigating, show NavigationScreen
   if (isNavigating) {
     return <NavigationScreen />;
+  }
+
+  // FR-702: Route editor flow (map-based)
+  if (creatorStep === "editing") {
+    return (
+      <RouteEditorScreen
+        onFinish={() => setCreatorStep("annotating")}
+        onCancel={() => {
+          useRouteCreatorStore.getState().reset();
+          setCreatorStep("idle");
+        }}
+        initialCenter={coords ? [coords.longitude, coords.latitude] : undefined}
+      />
+    );
   }
 
   // FR-701: Route creation flow
@@ -274,19 +289,35 @@ export default function MapScreen() {
         </View>
       )}
 
-      {/* FR-701: Create route FAB */}
+      {/* FR-701: Record route FAB */}
       {permissionStatus === "granted" && !selectedDestination && !showSearchResults && (
         <TouchableOpacity
           style={styles.createRouteFab}
           onPress={() => setCreatorStep("recording")}
-          accessibilityLabel="Crear nueva ruta"
+          accessibilityLabel="Grabar ruta caminando"
           accessibilityRole="button"
           accessibilityHint="Abre la grabacion GPS para crear una ruta caminando"
         >
           <Text style={styles.createRouteFabIcon} accessibilityElementsHidden>
-            🗺️
+            🎙️
           </Text>
-          <Text style={styles.createRouteFabText}>Crear ruta</Text>
+          <Text style={styles.createRouteFabText}>Grabar</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* FR-702: Edit route on map FAB */}
+      {permissionStatus === "granted" && !selectedDestination && !showSearchResults && (
+        <TouchableOpacity
+          style={styles.editRouteFab}
+          onPress={() => setCreatorStep("editing")}
+          accessibilityLabel="Crear ruta en mapa"
+          accessibilityRole="button"
+          accessibilityHint="Abre el editor para colocar puntos en el mapa"
+        >
+          <Text style={styles.editRouteFabIcon} accessibilityElementsHidden>
+            ✏️
+          </Text>
+          <Text style={styles.editRouteFabText}>Editar</Text>
         </TouchableOpacity>
       )}
 
@@ -454,7 +485,7 @@ const styles = StyleSheet.create({
   },
   createRouteFab: {
     position: "absolute",
-    bottom: 96,
+    bottom: 160,
     right: 16,
     zIndex: 10,
     flexDirection: "row",
@@ -475,6 +506,33 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   createRouteFabText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#ffffff",
+  },
+  editRouteFab: {
+    position: "absolute",
+    bottom: 96,
+    right: 16,
+    zIndex: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#34a853",
+    borderRadius: 28,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    minHeight: 48,
+    gap: 8,
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+  },
+  editRouteFabIcon: {
+    fontSize: 18,
+  },
+  editRouteFabText: {
     fontSize: 15,
     fontWeight: "600",
     color: "#ffffff",
