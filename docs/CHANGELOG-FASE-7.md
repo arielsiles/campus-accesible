@@ -1,7 +1,7 @@
 # Historial de Cambios — Fase 7: Herramienta de Creacion de Rutas
 
 > Registro cronologico de implementacion y cambios durante la Fase 7 del proyecto **Campus GPS Accesible**.
-> **Estado:** ✅ Completada
+> **Estado:** ✅ Completada (2026-04-05)
 > **Spec:** `docs/SPEC-FASE-7.md`
 
 ---
@@ -12,15 +12,13 @@
 |-------|----------|--------|----------|
 | T7.1 — Store + Track Recorder Service | FR-701 | ✅ Completada | ██████████ 100% |
 | T7.2 — Route Recorder Screen | FR-701, NFR-702 | ✅ Completada | ██████████ 100% |
-| T7.3 — Route Editor Screen | FR-702 | ⏳ Parcial | █████░░░░░ 50% |
+| T7.3 — Route Editor Screen | FR-702 | ✅ Completada | ██████████ 100% |
 | T7.4 — Segment Annotator Screen | FR-703 | ✅ Completada | ██████████ 100% |
 | T7.5 — Route Preview + Upload | FR-704, FR-707 | ✅ Completada | ██████████ 100% |
 | T7.6 — API de Gestion de Rutas | FR-705 | ✅ Completada | ██████████ 100% |
 | T7.7 — Auto-Descripciones al Crear | FR-706 | ✅ Completada | ██████████ 100% |
 
-**Progreso global Fase 7:** █████████░ 93% (6.5/7 tareas)
-
-**Nota:** T7.3 (RouteEditorScreen — edicion visual con drag-and-drop en mapa) esta parcialmente cubierta. La creacion via grabacion GPS (T7.2) es la via principal. La edicion visual en mapa con waypoints arrastrables requiere integracion avanzada con MapLibre gestures y se puede completar como mejora incremental.
+**Progreso global Fase 7:** ██████████ 100% (7/7 tareas)
 
 ---
 
@@ -135,16 +133,48 @@
 
 ---
 
-### 2026-04-05 — Integracion en MapScreen [FR-701]
+### 2026-04-05 — T7.3: Route Editor Screen [FR-702]
 
 **Categoria:** Implementacion
 
 #### Cambios realizados:
 
-1. **apps/mobile/src/screens/MapScreen.tsx** — Flujo de creacion:
-   - FAB "Crear ruta" (azul, posicion bottom-right encima del FAB reportar)
-   - Estado de flujo: idle → recording → annotating → preview → idle
-   - Importa y muestra RouteRecorderScreen, SegmentAnnotatorScreen, RoutePreviewScreen
+1. **apps/mobile/src/screens/RouteEditorScreen.tsx** — Editor visual:
+   - Vista dividida: mapa (arriba) + lista de waypoints (abajo)
+   - Long-press en mapa para colocar waypoint nuevo
+   - Waypoints arrastrables con MapLibre PointAnnotation (draggable=true)
+   - Tap en waypoint abre modal de edicion (nombre, tipo, eliminar)
+   - Botones ↑/↓ para reordenar (alternativa accesible al drag)
+   - Segmentos se regeneran automaticamente al anadir/mover/eliminar/reordenar
+   - Banner de instrucciones en mapa
+
+2. **apps/mobile/src/components/DraggableWaypoint.tsx** — Marcador:
+   - MapLibre PointAnnotation con draggable + onDragEnd
+   - Icono numerado con tipo de waypoint
+   - accessibilityLabel descriptivo en espanol
+
+3. **apps/mobile/src/components/EditableSegment.tsx** — Segmentos:
+   - ShapeSource + LineLayer con linea punteada azul
+   - Se actualiza reactivamente al mover waypoints
+
+4. **apps/mobile/src/screens/MapScreen.tsx** — Integrado:
+   - FAB "Grabar" (azul) para grabacion GPS
+   - FAB "Editar" (verde) para editor visual en mapa
+   - Flujo: idle → editing → annotating → preview → idle
+
+---
+
+### 2026-04-05 — Integracion en MapScreen [FR-701, FR-702]
+
+**Categoria:** Implementacion
+
+#### Cambios realizados:
+
+1. **apps/mobile/src/screens/MapScreen.tsx** — Flujos de creacion:
+   - FAB "Grabar" (azul) — grabacion GPS caminando
+   - FAB "Editar" (verde) — editor visual en mapa
+   - FAB "Reportar" (rojo) — reporte de incidencias
+   - Estado de flujo: idle → recording/editing → annotating → preview → idle
    - Reset automatico del store al completar o cancelar
 
 ---
@@ -158,10 +188,13 @@ apps/mobile/
   src/services/routeValidationService.ts  [FR-704] Local validation + GeoJSON serializer
   src/services/routeUploadService.ts      [FR-707] Upload to server API
   src/screens/RouteRecorderScreen.tsx     [FR-701] GPS recording + waypoint marking
+  src/screens/RouteEditorScreen.tsx       [FR-702] Visual editor with draggable waypoints
   src/screens/SegmentAnnotatorScreen.tsx  [FR-703] Accessibility annotation per segment
   src/screens/RoutePreviewScreen.tsx      [FR-704] Preview + name + upload
-  src/screens/MapScreen.tsx               [FR-701] +FAB "Crear ruta", creation flow
+  src/screens/MapScreen.tsx               [FR-701] 3 FABs: Grabar, Editar, Reportar
   src/components/RecordingControls.tsx    [FR-701] Timer, counters, action buttons
+  src/components/DraggableWaypoint.tsx    [FR-702] MapLibre draggable marker
+  src/components/EditableSegment.tsx      [FR-702] Dashed segment lines
 
 server/
   src/services/routeCreationService.ts    [FR-705] Validate + create + auto-descriptions
