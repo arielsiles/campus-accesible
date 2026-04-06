@@ -462,7 +462,11 @@ async function main() {
   // FR-201: Build route graph from all routes
   const graphResult = await buildGraph(prisma);
 
-  // FR-501: Seed sample incidents
+  // FR-501: Seed sample incidents — lookup segment IDs by segmentId
+  const segOdontoFarmacia = await prisma.routeSegment.findUnique({ where: { segmentId: "seg-odonto-farmacia" } });
+  const segBusMetro = await prisma.routeSegment.findUnique({ where: { segmentId: "seg-bus-metro" } });
+  const segMatesFisicas = await prisma.routeSegment.findUnique({ where: { segmentId: "seg-mates-fisicas" } });
+
   const incident1 = await prisma.incident.create({
     data: {
       deviceId: "seed-device-001",
@@ -472,7 +476,7 @@ async function main() {
       description: "Obras de reparación de acera que obligan a caminar por la calzada",
       latitude: 40.4479,
       longitude: -3.7258,
-      segmentId: "seg-odonto-farmacia",
+      segmentId: segOdontoFarmacia?.id ?? null,
       aiValidation: true,
       aiConfidence: 0.92,
       aiReason: "Ubicación válida en campus, descripción coherente con tipo 'obras'",
@@ -489,7 +493,7 @@ async function main() {
       description: "El ascensor de la estación de Metro Ciudad Universitaria no funciona desde esta mañana",
       latitude: 40.4449,
       longitude: -3.7302,
-      segmentId: "seg-bus-metro",
+      segmentId: segBusMetro?.id ?? null,
       aiValidation: true,
       aiConfidence: 0.85,
       aiReason: "Incidencia plausible, ubicación cercana a Metro CU",
@@ -506,7 +510,7 @@ async function main() {
       description: "Varias baldosas sueltas en el camino entre Matemáticas y Físicas, riesgo de tropiezo",
       latitude: 40.4496,
       longitude: -3.7245,
-      segmentId: "seg-mates-fisicas",
+      segmentId: segMatesFisicas?.id ?? null,
       aiValidation: true,
       aiConfidence: 0.78,
       aiReason: "Descripción coherente con superficie dañada en zona conocida",

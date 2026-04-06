@@ -2,12 +2,18 @@
 import { cachedFetch, invalidateCache } from "./apiCache";
 
 const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ?? "http://10.0.2.2:3000/api";
+  process.env.EXPO_PUBLIC_API_URL ?? "https://unexcludable-blythe-starchily.ngrok-free.dev/api";
 
 interface RequestOptions {
   method?: string;
   headers?: Record<string, string>;
 }
+
+// Headers comunes — incluye ngrok-skip-browser-warning para tunnels
+const BASE_HEADERS: Record<string, string> = {
+  "Content-Type": "application/json",
+  "ngrok-skip-browser-warning": "true",
+};
 
 // FR-601: Re-export cache invalidation for manual cache busting
 export { invalidateCache };
@@ -16,7 +22,7 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   const url = `${API_BASE_URL}${path}`;
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: BASE_HEADERS,
     body: JSON.stringify(body),
   });
 
@@ -34,7 +40,7 @@ export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
   const url = `${API_BASE_URL}${path}`;
   const response = await fetch(url, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: BASE_HEADERS,
     body: JSON.stringify(body),
   });
 
@@ -52,7 +58,7 @@ export async function apiDelete<T>(path: string, body?: unknown): Promise<T> {
   const url = `${API_BASE_URL}${path}`;
   const response = await fetch(url, {
     method: "DELETE",
-    headers: { "Content-Type": "application/json" },
+    headers: BASE_HEADERS,
     ...(body && { body: JSON.stringify(body) }),
   });
 
@@ -70,7 +76,7 @@ export async function apiDelete<T>(path: string, body?: unknown): Promise<T> {
 async function rawGet<T>(url: string): Promise<T> {
   const options: RequestOptions = {
     method: "GET",
-    headers: { "Content-Type": "application/json" },
+    headers: { ...BASE_HEADERS },
   };
 
   const response = await fetch(url, options);

@@ -76,6 +76,9 @@ export default function MapScreen() {
   // FR-004: Show permission modal when status is undetermined
   const [showPermissionModal, setShowPermissionModal] = useState(false);
 
+  // Route selector visibility
+  const [showRouteSelector, setShowRouteSelector] = useState(false);
+
   useEffect(() => {
     if (permissionStatus === "undetermined") {
       setShowPermissionModal(true);
@@ -83,6 +86,13 @@ export default function MapScreen() {
       setShowPermissionModal(false);
     }
   }, [permissionStatus]);
+
+  // Auto-center map on GPS position when available
+  useEffect(() => {
+    if (coords && permissionStatus === "granted") {
+      useMapStore.getState().setCenter([coords.longitude, coords.latitude]);
+    }
+  }, [coords?.latitude, coords?.longitude, permissionStatus]);
 
   // FR-005: Auto-select first route when routes load
   useEffect(() => {
@@ -166,7 +176,7 @@ export default function MapScreen() {
           useRouteCreatorStore.getState().reset();
           setCreatorStep("idle");
         }}
-        initialCenter={coords ? [coords.longitude, coords.latitude] : undefined}
+        initialCenter={coords ? [coords.longitude, coords.latitude] : center}
       />
     );
   }
@@ -289,8 +299,51 @@ export default function MapScreen() {
         </View>
       )}
 
+      {/* Route selector */}
+      {!selectedDestination && !showSearchResults && (
+        <TouchableOpacity
+          style={styles.routeSelectorFab}
+          onPress={() => setShowRouteSelector(!showRouteSelector)}
+          accessibilityLabel={`Ver rutas disponibles. ${routes.length} rutas`}
+          accessibilityRole="button"
+        >
+          <Text style={styles.routeSelectorIcon} accessibilityElementsHidden>🗂️</Text>
+          <Text style={styles.routeSelectorText}>Rutas ({routes.length})</Text>
+        </TouchableOpacity>
+      )}
+
+      {showRouteSelector && (
+        <View style={styles.routeList}>
+          <Text style={styles.routeListTitle} accessibilityRole="header">
+            Rutas disponibles
+          </Text>
+          {routes.map((r) => (
+            <TouchableOpacity
+              key={r.id}
+              style={[
+                styles.routeListItem,
+                selectedRouteId === r.id && styles.routeListItemSelected,
+              ]}
+              onPress={() => {
+                selectRoute(r.id);
+                setShowRouteSelector(false);
+              }}
+              accessibilityLabel={`${r.name}${selectedRouteId === r.id ? ", seleccionada" : ""}`}
+              accessibilityRole="button"
+            >
+              <Text style={[
+                styles.routeListItemText,
+                selectedRouteId === r.id && styles.routeListItemTextSelected,
+              ]}>
+                {r.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
       {/* FR-701: Record route FAB */}
-      {permissionStatus === "granted" && !selectedDestination && !showSearchResults && (
+      {!selectedDestination && !showSearchResults && (
         <TouchableOpacity
           style={styles.createRouteFab}
           onPress={() => setCreatorStep("recording")}
@@ -306,7 +359,7 @@ export default function MapScreen() {
       )}
 
       {/* FR-702: Edit route on map FAB */}
-      {permissionStatus === "granted" && !selectedDestination && !showSearchResults && (
+      {!selectedDestination && !showSearchResults && (
         <TouchableOpacity
           style={styles.editRouteFab}
           onPress={() => setCreatorStep("editing")}
@@ -322,7 +375,7 @@ export default function MapScreen() {
       )}
 
       {/* FR-502: Report incident FAB */}
-      {permissionStatus === "granted" && !selectedDestination && !showSearchResults && (
+      {!selectedDestination && !showSearchResults && (
         <TouchableOpacity
           style={styles.reportFab}
           onPress={() => setShowReportScreen(true)}
@@ -482,6 +535,74 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 14,
     color: "#ffffff",
+  },
+  routeSelectorFab: {
+    position: "absolute",
+    bottom: 224,
+    right: 16,
+    zIndex: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#333333",
+    borderRadius: 28,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    minHeight: 48,
+    gap: 8,
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+  },
+  routeSelectorIcon: {
+    fontSize: 18,
+  },
+  routeSelectorText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#ffffff",
+  },
+  routeList: {
+    position: "absolute",
+    bottom: 280,
+    right: 16,
+    left: 16,
+    zIndex: 20,
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    padding: 12,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    maxHeight: 300,
+  },
+  routeListTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#333",
+    marginBottom: 8,
+  },
+  routeListItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 4,
+    minHeight: 44,
+    justifyContent: "center",
+  },
+  routeListItemSelected: {
+    backgroundColor: "#e8f0fe",
+  },
+  routeListItemText: {
+    fontSize: 14,
+    color: "#333",
+  },
+  routeListItemTextSelected: {
+    color: "#1a73e8",
+    fontWeight: "600",
   },
   createRouteFab: {
     position: "absolute",
