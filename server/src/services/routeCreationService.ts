@@ -87,12 +87,13 @@ export function validateRouteData(data: unknown): RouteValidationError[] {
 }
 
 /**
- * FR-705: Create a new route from a GeoJSON FeatureCollection
+ * FR-705, FR-904: Create a new route from a GeoJSON FeatureCollection
  */
 export async function createRoute(
   prisma: PrismaClient,
-  data: RouteFeatureCollection
-): Promise<{ id: string; name: string; description: string }> {
+  data: RouteFeatureCollection,
+  options?: { creatorId?: string; status?: string; campusId?: string }
+): Promise<{ id: string; name: string; description: string; status: string }> {
   const props = data.properties;
 
   const features = data.features;
@@ -107,6 +108,9 @@ export async function createRoute(
     data: {
       name: props.name,
       description: props.description || "",
+      status: (options?.status as "published" | "pending_review") ?? "published",
+      creatorId: options?.creatorId ?? null,
+      campusId: options?.campusId ?? null,
       waypoints: {
         create: waypointFeatures.map((f, i) => ({
           waypointId: String(f.properties.waypointId),
@@ -144,7 +148,7 @@ export async function createRoute(
         })),
       },
     },
-    select: { id: true, name: true, description: true },
+    select: { id: true, name: true, description: true, status: true },
   });
 
   // FR-706: Auto-generate audio descriptions for new segments
@@ -176,8 +180,10 @@ export async function createRoute(
     });
   }
 
-  // Rebuild graph to include new route
-  await buildGraph(prisma);
+  // FR-904: Only rebuild graph for published routes
+  if ((options?.status ?? "published") === "published") {
+    await buildGraph(prisma);
+  }
 
   return route;
 }

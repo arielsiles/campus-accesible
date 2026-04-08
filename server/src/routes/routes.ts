@@ -8,13 +8,21 @@ const prisma = new PrismaClient();
 
 export const routeRoutes = new Hono();
 
-// GET /api/routes — list all routes
+// GET /api/routes — list routes (FR-904: only published by default)
 routeRoutes.get("/routes", async (c) => {
+  const campusId = c.req.query("campusId");
+  const status = c.req.query("status"); // for admin/reviewer filtering
+
   const routes = await prisma.route.findMany({
+    where: {
+      status: status ?? "published",
+      ...(campusId && { campusId }),
+    },
     select: {
       id: true,
       name: true,
       description: true,
+      status: true,
     },
   });
 

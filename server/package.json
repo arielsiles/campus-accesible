@@ -23,11 +23,13 @@
     "@campus-gps/shared-types": "workspace:*",
     "@hono/node-server": "^1.19.11",
     "@prisma/client": "^6",
+    "bcryptjs": "^3.0.3",
     "dotenv": "^17.3.1",
     "hono": "^4",
     "zod": "^3"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
     "@types/node": "^20",
     "prisma": "^6",
     "tsx": "^4",

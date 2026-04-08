@@ -12,17 +12,103 @@ datasource db {
   extensions = [postgis]
 }
 
-/// Campus route connecting two points of interest
-model Route {
+// FR-901: User authentication and roles
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // bcrypt hash
+  name      String
+  role      UserRole @default(contributor)
+  deviceId  String?  @map("device_id") // linked from anonymous Fase 5 usage
+  createdAt DateTime @default(now()) @map("created_at")
+
+  routes  Route[]       @relation("CreatedRoutes")
+  reviews RouteReview[]
+
+  @@map("users")
+}
+
+// FR-902: Campus multi-location model
+model Campus {
   id          String   @id @default(cuid())
   name        String
   description String
+  centerLng   Float    @map("center_lng")
+  centerLat   Float    @map("center_lat")
+  boundingBox Json     @map("bounding_box") // { minLng, minLat, maxLng, maxLat }
+  imageUrl    String?  @map("image_url")
   createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  routes Route[]
+
+  @@map("campuses")
+}
+
+// FR-904: Route review for moderation workflow
+model RouteReview {
+  id         String       @id @default(cuid())
+  routeId    String       @map("route_id")
+  reviewerId String       @map("reviewer_id")
+  action     ReviewAction
+  comment    String?
+  createdAt  DateTime     @default(now()) @map("created_at")
+
+  route    Route @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  reviewer User  @relation(fields: [reviewerId], references: [id])
+
+  @@map("route_reviews")
+}
+
+enum UserRole {
+  contributor
+  reviewer
+  admin
+
+  @@map("user_role")
+}
+
+enum RouteStatus {
+  draft
+  pending_review
+  changes_requested
+  published
+  rejected
+  archived
+
+  @@map("route_status")
+}
+
+enum ReviewAction {
+  approved
+  changes_requested
+  rejected
+
+  @@map("review_action")
+}
+
+/// Campus route connecting two points of interest
+model Route {
+  id          String      @id @default(cuid())
+  name        String
+  description String
+  status      RouteStatus @default(published) // FR-904: default published for backward compat
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  // FR-901: Creator relationship
+  creatorId String? @map("creator_id")
+  creator   User?   @relation("CreatedRoutes", fields: [creatorId], references: [id])
+
+  // FR-902: Campus relationship
+  campusId String? @map("campus_id")
+  campus   Campus? @relation(fields: [campusId], references: [id])
 
   waypoints Waypoint[]
   segments  RouteSegment[]
+  reviews   RouteReview[]
 
+  @@index([campusId])
+  @@index([status])
   @@map("routes")
 }
 

@@ -1,6 +1,7 @@
-// FR-008, FR-201, FR-205: Seed script — test routes with graph and transport data
-// Aligned with SPEC-FASE-2.md §10 test data requirements
+// FR-008, FR-201, FR-205, FR-901, FR-902: Seed script
+// Test routes with graph, transport data, users, and campus
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 import { buildGraph } from "../src/services/graphBuilder";
 
 const prisma = new PrismaClient();
@@ -21,12 +22,39 @@ const coords = {
 
 async function main() {
   // Clean existing data (order matters for FK constraints)
+  await prisma.routeReview.deleteMany();
   await prisma.pushSubscription.deleteMany();
   await prisma.incident.deleteMany();
   await prisma.graphEdge.deleteMany();
   await prisma.routeSegment.deleteMany();
   await prisma.waypoint.deleteMany();
   await prisma.route.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.campus.deleteMany();
+
+  // FR-901: Seed admin user
+  const adminPassword = await bcrypt.hash("admin123", 10);
+  const adminUser = await prisma.user.create({
+    data: {
+      id: "seed-admin",
+      email: "admin@campusgps.dev",
+      password: adminPassword,
+      name: "Administrador",
+      role: "admin",
+    },
+  });
+
+  // FR-902: Seed default campus
+  const campusCU = await prisma.campus.create({
+    data: {
+      id: "campus-cu",
+      name: "Ciudad Universitaria (UCM)",
+      description: "Campus principal de la Universidad Complutense de Madrid",
+      centerLng: -3.7264,
+      centerLat: 40.4468,
+      boundingBox: { minLng: -3.74, minLat: 40.44, maxLng: -3.72, maxLat: 40.46 },
+    },
+  });
 
   // === Route 1: Medicina → Metro CU (existing from Fase 1) ===
   const route1 = await prisma.route.create({
@@ -35,6 +63,9 @@ async function main() {
       name: "Medicina → Metro Ciudad Universitaria",
       description:
         "Ruta accesible desde la Facultad de Medicina hasta la estación de Metro Ciudad Universitaria",
+      status: "published",
+      campusId: campusCU.id,
+      creatorId: adminUser.id,
       waypoints: {
         create: [
           {
@@ -190,6 +221,9 @@ async function main() {
       name: "Derecho → Metro Ciudad Universitaria",
       description:
         "Ruta accesible desde la Facultad de Derecho hasta Metro Ciudad Universitaria",
+      status: "published",
+      campusId: campusCU.id,
+      creatorId: adminUser.id,
       waypoints: {
         create: [
           {
@@ -315,6 +349,9 @@ async function main() {
       name: "Informática → Medicina",
       description:
         "Ruta accesible desde la Facultad de Informática hasta Medicina",
+      status: "published",
+      campusId: campusCU.id,
+      creatorId: adminUser.id,
       waypoints: {
         create: [
           {
@@ -521,6 +558,8 @@ async function main() {
 
   console.log(
     `Seed complete:\n` +
+      `  Campus: "${campusCU.name}"\n` +
+      `  Admin: ${adminUser.email} (password: admin123)\n` +
       `  Route 1: "${route1.name}" — ${route1.waypoints.length} waypoints, ${route1.segments.length} segments\n` +
       `  Route 2: "${route2.name}" — ${route2.waypoints.length} waypoints, ${route2.segments.length} segments\n` +
       `  Route 3: "${route3.name}" — ${route3.waypoints.length} waypoints, ${route3.segments.length} segments\n` +

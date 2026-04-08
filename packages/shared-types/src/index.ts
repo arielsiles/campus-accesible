@@ -59,6 +59,18 @@ export type {
 } from "./incident";
 export { INCIDENT_TYPE_LABELS, INCIDENT_STATUS_LABELS } from "./incident";
 
+// FR-901: Auth and user types
+export type {
+  UserRole,
+  RouteStatus,
+  UserPublic,
+  RegisterRequest,
+  LoginRequest,
+  AuthResponse,
+  ReviewAction,
+} from "./auth";
+export { ROUTE_STATUS_LABELS, USER_ROLE_LABELS } from "./auth";
+
 // FR-204, FR-207: Navigation types
 export type {
   RouteCalculationRequest,

@@ -1,4 +1,4 @@
-// FR-705: Route management endpoints — POST, PUT, DELETE
+// FR-705, FR-904: Route management endpoints — POST, PUT, DELETE
 import { Hono } from "hono";
 import { PrismaClient } from "@prisma/client";
 import {
@@ -7,12 +7,13 @@ import {
   deleteRoute,
 } from "../services/routeCreationService";
 import type { RouteFeatureCollection } from "../services/routeCreationService";
+import { verifyToken } from "../services/authService";
 
 const prisma = new PrismaClient();
 
 export const routeManagementRoutes = new Hono();
 
-// POST /api/routes — Create a new route [FR-705]
+// POST /api/routes — Create a new route [FR-705, FR-904]
 routeManagementRoutes.post("/routes", async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) {
@@ -36,9 +37,31 @@ routeManagementRoutes.post("/routes", async (c) => {
     );
   }
 
-  const route = await createRoute(prisma, body as RouteFeatureCollection);
+  // FR-904: Determine route status based on user role
+  let creatorId: string | undefined;
+  let status: "published" | "pending_review" = "published"; // default for anonymous/admin
 
-  return c.json({ route, graphRebuilt: true }, 201);
+  const authHeader = c.req.header("Authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    try {
+      const payload = await verifyToken(authHeader.slice(7));
+      creatorId = payload.sub;
+      // Contributors' routes need review; admin routes auto-publish
+      if (payload.role === "contributor") {
+        status = "pending_review";
+      }
+    } catch {
+      // Invalid token — proceed as anonymous (published for backward compat)
+    }
+  }
+
+  const route = await createRoute(prisma, body as RouteFeatureCollection, {
+    creatorId,
+    status,
+    campusId: body.campusId,
+  });
+
+  return c.json({ route, graphRebuilt: status === "published" }, 201);
 });
 
 // DELETE /api/routes/:id — Delete a route [FR-705]

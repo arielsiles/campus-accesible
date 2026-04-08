@@ -22,6 +22,7 @@ import RouteEditorScreen from "./RouteEditorScreen";
 import SegmentAnnotatorScreen from "./SegmentAnnotatorScreen";
 import RoutePreviewScreen from "./RoutePreviewScreen";
 import { useRouteCreatorStore } from "../store/routeCreatorStore";
+import { useAuthStore } from "../store/authStore";
 import { useMapStore } from "../store/mapStore";
 import { useLocationStore } from "../store/locationStore";
 import { useRoutes } from "../hooks/useRoutes";
@@ -32,7 +33,12 @@ import { useNavigation } from "../hooks/useNavigation";
 import { useIncidents } from "../hooks/useIncidents";
 import { calculateRoute } from "../services/routeCalculationService";
 
-export default function MapScreen() {
+interface MapScreenProps {
+  onNavigateProfile?: () => void;
+  onNavigateCampus?: () => void;
+}
+
+export default function MapScreen({ onNavigateProfile, onNavigateCampus }: MapScreenProps = {}) {
   const center = useMapStore((s) => s.center);
   const zoom = useMapStore((s) => s.zoom);
   const selectedRouteId = useMapStore((s) => s.selectedRouteId);
@@ -390,6 +396,24 @@ export default function MapScreen() {
         </TouchableOpacity>
       )}
 
+      {/* FR-901, FR-902: Profile and campus buttons */}
+      {!selectedDestination && !showSearchResults && (
+        <View style={styles.topLeftFabs}>
+          {onNavigateProfile && (
+            <TouchableOpacity
+              style={styles.profileFab}
+              onPress={onNavigateProfile}
+              accessibilityLabel={useAuthStore.getState().user ? "Mi perfil" : "Iniciar sesión"}
+              accessibilityRole="button"
+            >
+              <Text style={styles.profileFabText}>
+                {useAuthStore.getState().user?.name?.charAt(0)?.toUpperCase() ?? "👤"}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
       <PermissionRequestModal
         visible={showPermissionModal}
         onRequestPermission={async () => {
@@ -684,5 +708,31 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: "#ffffff",
+  },
+  topLeftFabs: {
+    position: "absolute",
+    top: 50,
+    left: 16,
+    zIndex: 5,
+    flexDirection: "row",
+    gap: 8,
+  },
+  profileFab: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#1a1a2e",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  profileFabText: {
+    fontSize: 18,
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
