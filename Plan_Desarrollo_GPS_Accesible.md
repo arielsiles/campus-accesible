@@ -317,6 +317,60 @@ El desarrollo se estructura en **6 fases progresivas**. Cada fase produce un ent
 
 ---
 
+### FASE 11: Camara Inteligente con Vision IA (Semanas 53-58)
+
+**Objetivo:** Integrar la camara del dispositivo con Claude Vision API para describir el entorno en tiempo real, adaptado al perfil de accesibilidad del usuario.
+
+**Tareas:**
+- [ ] Integracion de camara con react-native-vision-camera
+- [ ] Modo "Que veo?": captura de imagen + descripcion IA del entorno
+- [ ] Prompts adaptados por perfil (visual, movilidad, sordo, lectura facil)
+- [ ] Contexto GPS + ruta activa enriquece la descripcion
+- [ ] Historial de capturas con descripciones
+- [ ] Modo continuo: descripcion automatica cada 15-30s durante navegacion
+
+**Tecnologias clave:** react-native-vision-camera, Claude Vision API, TTS existente
+
+> **Entregable:** Usuario apunta la camara → IA describe el entorno en espanol, adaptado a su perfil de accesibilidad.
+
+---
+
+### FASE 12: OCR e Informacion Contextual (Semanas 59-62)
+
+**Objetivo:** Leer texto de carteles/senalizacion y mostrar informacion contextual rica (comercios, clima, transporte).
+
+**Tareas:**
+- [ ] OCR on-device con Google ML Kit (sin internet, tiempo real)
+- [ ] Lectura automatica de carteles y senalizaciones via TTS
+- [ ] Google Places API: comercios cercanos con horarios y tipo
+- [ ] OpenWeatherMap: clima actual y alertas de accesibilidad
+- [ ] APIs de transporte: tiempos reales de bus/metro
+- [ ] Panel de informacion contextual unificado
+
+**Tecnologias clave:** Google ML Kit, Google Places API, OpenWeatherMap
+
+> **Entregable:** App lee carteles automaticamente y muestra info de comercios, clima, y transporte cercano.
+
+---
+
+### FASE 13: Navegacion con Realidad Aumentada (Semanas 63-70)
+
+**Objetivo:** Vista de camara con overlays de navegacion: flechas de direccion, marcadores de POIs, alertas de riesgo. AR basada en brujula (no ARCore).
+
+**Tareas:**
+- [ ] Vista AR con camara + overlays 2D de navegacion
+- [ ] Flechas de direccion grandes y accesibles sobre la camara
+- [ ] Marcadores de POIs posicionados por bearing (brujula + GPS)
+- [ ] Alertas de riesgo superpuestas (escaleras, cruces peligrosos)
+- [ ] Toggle mapa/AR durante navegacion
+- [ ] Modo simplificado accesible (solo flecha + distancia)
+
+**Enfoque tecnico:** Compass-based AR (brujula + GPS + overlays 2D). No requiere ARCore/ARKit.
+
+> **Entregable:** Navegacion con realidad aumentada accesible — flechas y marcadores sobre la camara en tiempo real.
+
+---
+
 ## 4. STACK TECNOLOGICO RECOMENDADO
 
 La seleccion prioriza tecnologias **open source**, con buen soporte de accesibilidad y compatibles con desarrollo asistido por IA.
@@ -472,18 +526,27 @@ La recomendacion es la **Estrategia C** (Desarrollo nuevo con componentes open s
 | **Fase 5** | Sistema colaborativo e incidencias | 4 semanas | ✅ Completada |
 | **Fase 6** | Optimizacion y escalabilidad | 6 semanas | ✅ Completada |
 
-### 8.2 Fases de Crecimiento (Nuevas)
+### 8.2 Fases de Crecimiento
+
+| Fase | Descripcion | Duracion | Estado |
+|------|------------|----------|--------|
+| **Fase 7** | Herramienta de creacion de rutas in-app | 6 semanas | ✅ Completada |
+| **Fase 8** | Integracion activa con OpenStreetMap | 4 semanas | ✅ Completada |
+| **Fase 9** | Multi-campus y comunidad | 6 semanas | Planificada |
+| **Fase 10** | Financiamiento y lanzamiento publico | 6 semanas | Planificada |
+
+### 8.3 Fases de Innovacion (Vision IA + AR)
 
 | Fase | Descripcion | Duracion | Prioridad |
 |------|------------|----------|-----------|
-| **Fase 7** | Herramienta de creacion de rutas in-app | 6 semanas | **Critica** |
-| **Fase 8** | Integracion activa con OpenStreetMap | 4 semanas | Alta |
-| **Fase 9** | Multi-campus y comunidad | 6 semanas | Alta |
-| **Fase 10** | Financiamiento y lanzamiento publico | 6 semanas | Alta |
+| **Fase 11** | Camara inteligente con Vision IA | 6 semanas | Alta |
+| **Fase 12** | OCR e informacion contextual | 4 semanas | Alta |
+| **Fase 13** | Navegacion con realidad aumentada | 8 semanas | Media |
 
-> **Fases 1-6:** 30 semanas completadas.
-> **Fases 7-10:** 22 semanas estimadas (~5.5 meses adicionales).
-> **Total del proyecto:** 52 semanas (~12 meses) con un desarrollador + agentes IA.
+> **Fases 1-8:** 40 semanas completadas.
+> **Fases 9-10:** 12 semanas (plataforma + lanzamiento).
+> **Fases 11-13:** 18 semanas (vision IA + AR).
+> **Total del proyecto:** 70 semanas (~16 meses) con un desarrollador + agentes IA.
 
 ### 8.3 Consideraciones Importantes
 

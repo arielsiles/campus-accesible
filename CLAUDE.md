@@ -89,12 +89,12 @@ docs/               → Specs, setup guide, governance
 
 ## Current Phase
 
-**Fase 7: Herramienta de Creacion de Rutas**
+**Fase 7: Herramienta de Creacion de Rutas** ✅ Completada
 - Spec: `docs/SPEC-FASE-7.md`
 - Changelog: `docs/CHANGELOG-FASE-7.md`
 - Governance: `docs/GOBERNANZA-PROYECTO.md`
 
-**Fase 8: Integracion Activa con OpenStreetMap**
+**Fase 8: Integracion Activa con OpenStreetMap** ✅ Completada
 - Spec: `docs/SPEC-FASE-8.md`
 - Changelog: `docs/CHANGELOG-FASE-8.md`
 
@@ -105,6 +105,18 @@ docs/               → Specs, setup guide, governance
 **Fase 10: Financiamiento y Lanzamiento Publico** (planificada)
 - Spec: `docs/SPEC-FASE-10.md`
 - Changelog: `docs/CHANGELOG-FASE-10.md`
+
+**Fase 11: Camara Inteligente con Vision IA** (planificada)
+- Spec: `docs/SPEC-FASE-11.md`
+- Changelog: `docs/CHANGELOG-FASE-11.md`
+
+**Fase 12: OCR e Informacion Contextual** (planificada)
+- Spec: `docs/SPEC-FASE-12.md`
+- Changelog: `docs/CHANGELOG-FASE-12.md`
+
+**Fase 13: Navegacion con Realidad Aumentada** (planificada)
+- Spec: `docs/SPEC-FASE-13.md`
+- Changelog: `docs/CHANGELOG-FASE-13.md`
 
 **Fase 6: Optimizacion, Escalabilidad y Lanzamiento** ✅ Completada
 - Spec: `docs/SPEC-FASE-6.md`
