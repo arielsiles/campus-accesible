@@ -2,6 +2,7 @@ node_modules/
 dist/
 .env
 .env.local
+.env.production
 *.tsbuildinfo
 .turbo/
 .expo/
@@ -12,3 +13,6 @@ ios/
 .DS_Store
 Thumbs.db
 .claude/
+
+# Production credentials — NEVER commit
+docs/CREDENCIALES-PRODUCCION.md
