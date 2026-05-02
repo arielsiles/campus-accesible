@@ -1,7 +1,8 @@
 // FR-208: Active navigation screen with route, instructions, progress
 // FR-303: Screen reader integration with focus management
-import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, View } from "react-native";
+// FR-1105: Continuous AI scan during navigation with quick incident reporting
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { StyleSheet, View, Text, Switch, TouchableOpacity } from "react-native";
 import { focusManager } from "../accessibility/focusManager";
 import MapView from "../components/MapView";
 import RoutePolyline from "../components/RoutePolyline";
@@ -13,8 +14,11 @@ import NavigationControls from "../components/NavigationControls";
 import OffRouteAlert from "../components/OffRouteAlert";
 import GpsLostAlert from "../components/GpsLostAlert";
 import ArrivalModal from "../components/ArrivalModal";
+import ContinuousScanOverlay from "../components/ContinuousScanOverlay";
+import QuickReportBanner from "../components/QuickReportBanner";
 import { useNavigation } from "../hooks/useNavigation";
 import { useSnapToRoute } from "../hooks/useSnapToRoute";
+import { useContinuousScan } from "../hooks/useContinuousScan";
 import { useLocationStore } from "../store/locationStore";
 import { useNavigationStore } from "../store/navigationStore";
 
@@ -89,6 +93,40 @@ export default function NavigationScreen() {
     }
   }, [isNavigating]);
 
+  // FR-1105: Continuous scan during navigation
+  const continuousScan = useContinuousScan();
+  const [reportBannerKey, setReportBannerKey] = useState(0);
+  const [reportBannerDismissed, setReportBannerDismissed] = useState(false);
+
+  // Show report banner when AI detects significant risk
+  const shouldShowReportBanner =
+    continuousScan.enabled &&
+    continuousScan.lastResult != null &&
+    !reportBannerDismissed &&
+    (continuousScan.lastResult.riskLevel === "high" ||
+      (continuousScan.lastResult.riskLevel === "medium" &&
+        continuousScan.lastResult.obstacles.length > 0));
+
+  // Reset dismissal when a new result comes in (so user can report each new finding)
+  useEffect(() => {
+    if (continuousScan.lastChange?.isSignificant) {
+      setReportBannerDismissed(false);
+      setReportBannerKey((k) => k + 1);
+    }
+  }, [continuousScan.lastChange]);
+
+  // Auto-disable continuous scan on arrival
+  useEffect(() => {
+    if (hasArrived) continuousScan.setEnabled(false);
+  }, [hasArrived]);
+
+  const handleScanReady = useCallback(
+    (capture: (() => Promise<string | null>) | null) => {
+      continuousScan.setCaptureFn(capture);
+    },
+    [continuousScan]
+  );
+
   // FR-208: Center map on user or route origin
   const mapCenter: [number, number] = gpsPosition ??
     route?.origin.coordinates ?? [-3.7264, 40.4468];
@@ -109,6 +147,12 @@ export default function NavigationScreen() {
         <UserLocationMarker />
       </MapView>
 
+      {/* FR-1105: Hidden camera for continuous scanning */}
+      <ContinuousScanOverlay
+        enabled={continuousScan.enabled}
+        onReady={handleScanReady}
+      />
+
       {/* FR-208: Top overlay — instruction banner */}
       <View style={styles.topOverlay} ref={instructionRef}>
         {currentInstruction && (
@@ -120,6 +164,41 @@ export default function NavigationScreen() {
           <GpsLostAlert visible={gpsLost} />
           <OffRouteAlert visible={isOffRoute && !gpsLost} />
         </View>
+
+        {/* FR-1105: Continuous scan toggle */}
+        <View style={styles.scanToggle}>
+          <View style={styles.scanToggleTextWrap}>
+            <Text style={styles.scanToggleLabel}>
+              📷 Camara IA continua
+            </Text>
+            <Text style={styles.scanToggleHint}>
+              {continuousScan.enabled
+                ? continuousScan.scanning
+                  ? "Analizando..."
+                  : "Activa — analiza cada 20s"
+                : "Activa para analisis automatico del entorno"}
+            </Text>
+          </View>
+          <Switch
+            value={continuousScan.enabled}
+            onValueChange={continuousScan.setEnabled}
+            accessibilityLabel="Activar camara IA continua"
+            accessibilityHint="Captura automatica del entorno cada 20 segundos durante la navegacion"
+            trackColor={{ false: "#d1d5db", true: "#7c3aed" }}
+            thumbColor="#fff"
+          />
+        </View>
+
+        {/* FR-1105: Quick report banner when AI detects risk */}
+        {shouldShowReportBanner && continuousScan.lastResult && (
+          <QuickReportBanner
+            key={reportBannerKey}
+            result={continuousScan.lastResult}
+            latitude={coords?.latitude}
+            longitude={coords?.longitude}
+            onDone={() => setReportBannerDismissed(true)}
+          />
+        )}
       </View>
 
       {/* FR-208: Bottom overlay — progress + controls */}
@@ -154,6 +233,34 @@ const styles = StyleSheet.create({
   },
   alerts: {
     gap: 8,
+  },
+  scanToggle: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    minHeight: 56,
+    gap: 12,
+  },
+  scanToggleTextWrap: {
+    flex: 1,
+  },
+  scanToggleLabel: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1a1a2e",
+  },
+  scanToggleHint: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 2,
   },
   bottomOverlay: {
     position: "absolute",
