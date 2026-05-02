@@ -92,6 +92,9 @@ export default function MapScreen({
   // Route selector visibility
   const [showRouteSelector, setShowRouteSelector] = useState(false);
 
+  // F2: Direction modal for navigating a selected route
+  const [navigateRouteId, setNavigateRouteId] = useState<string | null>(null);
+
   useEffect(() => {
     if (permissionStatus === "undetermined") {
       setShowPermissionModal(true);
@@ -135,7 +138,33 @@ export default function MapScreen({
     setCalcError(null);
   };
 
-  // FR-208: Calculate route and start navigation
+  // F3: Find waypoint nearest to user's GPS to use as routing origin
+  const findNearestWaypointToGps = (): string | null => {
+    if (!route || !coords) return null;
+    const waypointFeatures = route.features.filter(
+      (f) => f.properties.featureType === "waypoint"
+    );
+    if (waypointFeatures.length === 0) return null;
+
+    let nearestId: string | null = null;
+    let minDistance = Infinity;
+
+    for (const wp of waypointFeatures) {
+      const wpCoords = wp.geometry.coordinates as [number, number];
+      // Haversine distance (simple Euclidean works for small distances)
+      const dLng = wpCoords[0] - coords.longitude;
+      const dLat = wpCoords[1] - coords.latitude;
+      const distance = Math.sqrt(dLng * dLng + dLat * dLat);
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestId = String(wp.properties.waypointId);
+      }
+    }
+    return nearestId;
+  };
+
+  // FR-208, F3: Calculate route and start navigation
   const handleStartNavigation = async () => {
     if (!selectedDestination || !route) return;
 
@@ -143,11 +172,18 @@ export default function MapScreen({
     setCalcError(null);
 
     try {
-      // FR-208: Use first waypoint of current route as origin
-      const originFeature = route.features.find(
-        (f) => f.properties.featureType === "waypoint"
-      );
-      const originWaypointId = originFeature?.properties.waypointId;
+      // F3: Origin = waypoint nearest to user's GPS (not always the first)
+      // Falls back to first waypoint if no GPS available
+      let originWaypointId = findNearestWaypointToGps();
+
+      if (!originWaypointId) {
+        const originFeature = route.features.find(
+          (f) => f.properties.featureType === "waypoint"
+        );
+        originWaypointId = originFeature?.properties.waypointId
+          ? String(originFeature.properties.waypointId)
+          : null;
+      }
 
       if (!originWaypointId) {
         setCalcError("No se encontró el punto de origen");
@@ -173,6 +209,53 @@ export default function MapScreen({
   const handleDismissDestination = () => {
     setSelectedDestination(null);
     setCalcError(null);
+  };
+
+  // F2: Navigate selected route in chosen direction (start or end)
+  const handleNavigateRouteDirection = async (
+    direction: "start" | "end"
+  ) => {
+    if (!route) return;
+
+    const waypoints = route.features.filter(
+      (f) => f.properties.featureType === "waypoint"
+    );
+    if (waypoints.length === 0) return;
+
+    const targetIndex = direction === "start" ? 0 : waypoints.length - 1;
+    const targetFeature = waypoints[targetIndex];
+    const destinationCoords = targetFeature.geometry.coordinates as [number, number];
+
+    // F3: Origin = nearest waypoint to GPS
+    let originWaypointId = findNearestWaypointToGps();
+    if (!originWaypointId) {
+      originWaypointId = String(waypoints[0].properties.waypointId);
+    }
+    const destinationWaypointId = String(targetFeature.properties.waypointId);
+
+    if (originWaypointId === destinationWaypointId) {
+      setCalcError("Ya estas en este punto de la ruta");
+      return;
+    }
+
+    setNavigateRouteId(null);
+    setShowRouteSelector(false);
+    setCalculatingRoute(true);
+    setCalcError(null);
+
+    try {
+      const calculatedRoute: CalculatedRoute = await calculateRoute(
+        originWaypointId,
+        destinationWaypointId
+      );
+      startNavigation(calculatedRoute);
+    } catch (err) {
+      setCalcError(
+        err instanceof Error ? err.message : "Error al calcular la ruta"
+      );
+    } finally {
+      setCalculatingRoute(false);
+    }
   };
 
   // FR-208: When navigating, show NavigationScreen
@@ -362,27 +445,91 @@ export default function MapScreen({
             Rutas disponibles
           </Text>
           {routes.map((r) => (
-            <TouchableOpacity
+            <View
               key={r.id}
               style={[
                 styles.routeListItem,
                 selectedRouteId === r.id && styles.routeListItemSelected,
               ]}
-              onPress={() => {
-                selectRoute(r.id);
-                setShowRouteSelector(false);
-              }}
-              accessibilityLabel={`${r.name}${selectedRouteId === r.id ? ", seleccionada" : ""}`}
-              accessibilityRole="button"
             >
-              <Text style={[
-                styles.routeListItemText,
-                selectedRouteId === r.id && styles.routeListItemTextSelected,
-              ]}>
-                {r.name}
-              </Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.routeListItemMain}
+                onPress={() => {
+                  selectRoute(r.id);
+                }}
+                accessibilityLabel={`${r.name}${selectedRouteId === r.id ? ", seleccionada" : ""}`}
+                accessibilityRole="button"
+                accessibilityHint="Mostrar esta ruta en el mapa"
+              >
+                <Text style={[
+                  styles.routeListItemText,
+                  selectedRouteId === r.id && styles.routeListItemTextSelected,
+                ]}>
+                  {r.name}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.routeNavigateBtn}
+                onPress={() => {
+                  selectRoute(r.id);
+                  setNavigateRouteId(r.id);
+                }}
+                accessibilityLabel={`Navegar por la ruta ${r.name}`}
+                accessibilityRole="button"
+                accessibilityHint="Elegir direccion y empezar navegacion"
+              >
+                <Text style={styles.routeNavigateBtnText}>Navegar →</Text>
+              </TouchableOpacity>
+            </View>
           ))}
+        </View>
+      )}
+
+      {/* F2: Direction picker modal */}
+      {navigateRouteId && route && (
+        <View style={styles.directionModalOverlay}>
+          <View style={styles.directionModal}>
+            <Text style={styles.directionModalTitle} accessibilityRole="header">
+              ¿Hacia donde quieres ir?
+            </Text>
+            {(() => {
+              const wps = route.features.filter(
+                (f) => f.properties.featureType === "waypoint"
+              );
+              const firstName = wps[0]?.properties.name ?? "Inicio";
+              const lastName = wps[wps.length - 1]?.properties.name ?? "Final";
+              return (
+                <>
+                  <TouchableOpacity
+                    style={styles.directionBtn}
+                    onPress={() => handleNavigateRouteDirection("start")}
+                    accessibilityLabel={`Navegar hacia ${firstName}`}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.directionBtnLabel}>Hacia el inicio</Text>
+                    <Text style={styles.directionBtnTarget}>{firstName}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.directionBtn}
+                    onPress={() => handleNavigateRouteDirection("end")}
+                    accessibilityLabel={`Navegar hacia ${lastName}`}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.directionBtnLabel}>Hacia el final</Text>
+                    <Text style={styles.directionBtnTarget}>{lastName}</Text>
+                  </TouchableOpacity>
+                </>
+              );
+            })()}
+            <TouchableOpacity
+              style={styles.directionCancelBtn}
+              onPress={() => setNavigateRouteId(null)}
+              accessibilityRole="button"
+              accessibilityLabel="Cancelar"
+            >
+              <Text style={styles.directionCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -599,6 +746,81 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 5,
   },
+  routeListItemMain: {
+    flex: 1,
+    paddingVertical: 4,
+    paddingRight: 8,
+    minHeight: 36,
+    justifyContent: "center",
+  },
+  routeNavigateBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "#1a73e8",
+    borderRadius: 6,
+    minHeight: 36,
+    justifyContent: "center",
+  },
+  routeNavigateBtnText: {
+    fontSize: 13,
+    color: "#fff",
+    fontWeight: "600",
+  },
+  directionModalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 100,
+    padding: 24,
+  },
+  directionModal: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    width: "100%",
+    maxWidth: 400,
+  },
+  directionModalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1a1a2e",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  directionBtn: {
+    backgroundColor: "#1a73e8",
+    borderRadius: 8,
+    padding: 14,
+    marginBottom: 8,
+    minHeight: 56,
+    justifyContent: "center",
+  },
+  directionBtnLabel: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  directionBtnTarget: {
+    color: "#cfe2ff",
+    fontSize: 13,
+    marginTop: 2,
+  },
+  directionCancelBtn: {
+    paddingVertical: 12,
+    alignItems: "center",
+    minHeight: 44,
+    justifyContent: "center",
+    marginTop: 4,
+  },
+  directionCancelText: {
+    color: "#666",
+    fontSize: 15,
+  },
   cameraFab: {
     position: "absolute",
     bottom: 288,
@@ -657,12 +879,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   routeListItem: {
-    paddingVertical: 12,
+    paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
     marginBottom: 4,
     minHeight: 44,
-    justifyContent: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   routeListItemSelected: {
     backgroundColor: "#e8f0fe",

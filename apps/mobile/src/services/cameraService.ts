@@ -1,5 +1,6 @@
-// FR-1101: Camera capture and image processing
+// FR-1101, NFR-1101: Camera capture and image processing
 import * as FileSystem from "expo-file-system";
+import * as ImageManipulator from "expo-image-manipulator";
 
 export interface CapturedImage {
   uri: string;
@@ -7,6 +8,24 @@ export interface CapturedImage {
   height: number;
   base64?: string;
   sizeBytes?: number;
+}
+
+/**
+ * NFR-1101: Resize + compress image so the base64 payload fits server limits.
+ * Default 1024px max width with 60% JPEG quality keeps payload under ~500KB
+ * for typical camera photos.
+ */
+export async function compressImage(
+  uri: string,
+  maxWidth: number = 1024,
+  quality: number = 0.6
+): Promise<string> {
+  const result = await ImageManipulator.manipulateAsync(
+    uri,
+    [{ resize: { width: maxWidth } }],
+    { compress: quality, format: ImageManipulator.SaveFormat.JPEG }
+  );
+  return result.uri;
 }
 
 /**

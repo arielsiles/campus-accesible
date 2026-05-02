@@ -29,14 +29,27 @@ waypointRoutes.get("/waypoints/search", async (c) => {
 
   const query = parsed.data.q;
 
-  // FR-206: Case-insensitive partial match, max 10 results
-  const waypoints = await prisma.waypoint.findMany({
-    where: {
-      name: { contains: query, mode: "insensitive" },
-    },
-    take: 10,
-    orderBy: { name: "asc" },
-  });
+  // FR-206: Accent + case-insensitive partial match using Postgres `unaccent`
+  // Searches in name and description, max 10 results
+  const waypoints = await prisma.$queryRaw<Array<{
+    waypointId: string;
+    name: string;
+    description: string;
+    waypointType: string;
+    latitude: number;
+    longitude: number;
+    transportType: string | null;
+    transportLines: string[];
+  }>>`
+    SELECT waypoint_id AS "waypointId", name, description,
+           waypoint_type AS "waypointType", latitude, longitude,
+           transport_type AS "transportType", transport_lines AS "transportLines"
+    FROM waypoints
+    WHERE unaccent(name) ILIKE unaccent(${"%" + query + "%"})
+       OR unaccent(description) ILIKE unaccent(${"%" + query + "%"})
+    ORDER BY name ASC
+    LIMIT 10
+  `;
 
   const results = waypoints.map((wp) => ({
     waypointId: wp.waypointId,

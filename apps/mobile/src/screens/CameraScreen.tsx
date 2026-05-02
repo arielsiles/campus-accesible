@@ -1,5 +1,5 @@
-// FR-1101, FR-1102: Camera screen with capture and AI description
-import React, { useRef, useState } from "react";
+// FR-1101, FR-1102, FR-1103: Camera screen with capture, AI description and TTS
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -7,22 +7,54 @@ import {
   StyleSheet,
   ActivityIndicator,
   ScrollView,
+  Image,
 } from "react-native";
 import { CameraView, CameraType } from "expo-camera";
+import * as Speech from "expo-speech";
 import { useCamera } from "../hooks/useCamera";
+import { imageToBase64, compressImage } from "../services/cameraService";
+import { describeImage, type VisionDescribeResponse } from "../services/visionService";
+import { useAccessibilityStore } from "../store/accessibilityStore";
+import { useLocationStore } from "../store/locationStore";
 
 interface CameraScreenProps {
   onClose: () => void;
 }
 
+const RISK_LABELS: Record<string, { label: string; color: string }> = {
+  none: { label: "Sin riesgos detectados", color: "#22c55e" },
+  low: { label: "Riesgo bajo", color: "#eab308" },
+  medium: { label: "Riesgo medio", color: "#f97316" },
+  high: { label: "Riesgo alto", color: "#dc2626" },
+};
+
+const SURFACE_LABELS: Record<string, string> = {
+  paved: "Pavimentada",
+  cobblestone: "Adoquinada",
+  gravel: "Grava",
+  dirt: "Tierra",
+  tactile: "Pavimento tactil",
+  unknown: "Sin determinar",
+};
+
 export default function CameraScreen({ onClose }: CameraScreenProps) {
-  const { permission, requestPermission, isReady } = useCamera();
+  const { permission, requestPermission } = useCamera();
   const cameraRef = useRef<CameraView | null>(null);
   const [facing] = useState<CameraType>("back");
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
-  const [description, setDescription] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [result, setResult] = useState<VisionDescribeResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const profile = useAccessibilityStore((s) => s.profile);
+  const coords = useLocationStore((s) => s.coords);
+
+  // FR-1102: Stop TTS when screen unmounts
+  useEffect(() => {
+    return () => {
+      Speech.stop();
+    };
+  }, []);
 
   // Permission not yet determined
   if (permission === null) {
@@ -48,10 +80,7 @@ export default function CameraScreen({ onClose }: CameraScreenProps) {
         <TouchableOpacity
           style={styles.primaryBtn}
           onPress={async () => {
-            const result = await requestPermission();
-            if (result !== "granted") {
-              // user denied — guide to settings
-            }
+            await requestPermission();
           }}
           accessibilityRole="button"
           accessibilityLabel="Conceder permiso de camara"
@@ -73,6 +102,7 @@ export default function CameraScreen({ onClose }: CameraScreenProps) {
   const handleCapture = async () => {
     if (!cameraRef.current || isCapturing) return;
     setIsCapturing(true);
+    setError(null);
     try {
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.7,
@@ -81,22 +111,66 @@ export default function CameraScreen({ onClose }: CameraScreenProps) {
       });
       if (photo?.uri) {
         setCapturedUri(photo.uri);
-        // T11.3 will add the AI describe step here
+        // Auto-trigger analysis
+        await analyzeImage(photo.uri);
       }
-    } catch {
-      // Silently ignore camera errors
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al capturar");
     } finally {
       setIsCapturing(false);
     }
   };
 
+  const analyzeImage = async (uri: string) => {
+    setAnalyzing(true);
+    setError(null);
+    setResult(null);
+    try {
+      // NFR-1101: Resize + compress to keep payload under server limit
+      const compressedUri = await compressImage(uri, 1024, 0.6);
+      const base64 = await imageToBase64(compressedUri);
+      const response = await describeImage({
+        image: base64,
+        mediaType: "image/jpeg",
+        profile,
+        latitude: coords?.latitude,
+        longitude: coords?.longitude,
+      });
+      setResult(response);
+      // FR-1102: Speak the description with TTS
+      Speech.speak(response.description, {
+        language: "es-ES",
+        rate: 1.0,
+        pitch: 1.0,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error en analisis";
+      setError(message);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const handleSpeakAgain = () => {
+    if (!result) return;
+    Speech.stop();
+    Speech.speak(result.description, {
+      language: "es-ES",
+      rate: 1.0,
+      pitch: 1.0,
+    });
+  };
+
   const handleRetake = () => {
+    Speech.stop();
     setCapturedUri(null);
-    setDescription(null);
+    setResult(null);
+    setError(null);
   };
 
   // Captured photo + result view
   if (capturedUri) {
+    const risk = result ? RISK_LABELS[result.riskLevel] : null;
     return (
       <View style={styles.container}>
         <View style={styles.headerBar}>
@@ -104,36 +178,120 @@ export default function CameraScreen({ onClose }: CameraScreenProps) {
             onPress={onClose}
             style={styles.closeBtn}
             accessibilityRole="button"
-            accessibilityLabel="Cerrar camara"
+            accessibilityLabel="Cerrar camara y volver al mapa"
           >
             <Text style={styles.closeText}>← Volver</Text>
           </TouchableOpacity>
         </View>
 
         <ScrollView contentContainerStyle={styles.resultContainer}>
-          <Text style={styles.resultTitle} accessibilityRole="header">
-            Captura tomada
-          </Text>
+          <Image
+            source={{ uri: capturedUri }}
+            style={styles.thumbnail}
+            accessibilityLabel="Vista previa de la imagen capturada"
+          />
 
           {analyzing && (
-            <View style={styles.analyzingBox} accessibilityLiveRegion="polite">
+            <View
+              style={styles.analyzingBox}
+              accessibilityLiveRegion="polite"
+              accessibilityLabel="Analizando imagen con IA"
+            >
               <ActivityIndicator size="large" color="#2563eb" />
               <Text style={styles.body}>Analizando con IA...</Text>
             </View>
           )}
 
-          {description && (
-            <View style={styles.descriptionBox} accessibilityLiveRegion="polite">
-              <Text style={styles.descriptionText}>{description}</Text>
+          {error && (
+            <View
+              style={styles.errorBox}
+              accessibilityRole="alert"
+              accessibilityLiveRegion="assertive"
+            >
+              <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
 
-          {!description && !analyzing && (
-            <View style={styles.placeholderBox}>
-              <Text style={styles.body}>
-                La descripcion IA se anadira en el siguiente paso (T11.3).
+          {result && (
+            <>
+              {/* Description card */}
+              <View
+                style={styles.descriptionBox}
+                accessibilityLiveRegion="polite"
+                accessibilityRole="summary"
+              >
+                <Text style={styles.cardTitle} accessibilityRole="header">
+                  Descripcion
+                </Text>
+                <Text style={styles.descriptionText}>{result.description}</Text>
+                <TouchableOpacity
+                  style={styles.speakBtn}
+                  onPress={handleSpeakAgain}
+                  accessibilityLabel="Leer descripcion en voz alta otra vez"
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.speakBtnText}>🔊 Leer de nuevo</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Risk level badge */}
+              {risk && (
+                <View
+                  style={[styles.riskBadge, { backgroundColor: risk.color + "22", borderColor: risk.color }]}
+                  accessibilityLabel={`Nivel de riesgo: ${risk.label}`}
+                >
+                  <Text style={[styles.riskText, { color: risk.color }]}>
+                    {risk.label}
+                  </Text>
+                </View>
+              )}
+
+              {/* Surface info */}
+              {result.surface && result.surface !== "unknown" && (
+                <View style={styles.infoCard}>
+                  <Text style={styles.cardTitle}>Superficie</Text>
+                  <Text style={styles.infoText}>
+                    {SURFACE_LABELS[result.surface] ?? result.surface}
+                  </Text>
+                </View>
+              )}
+
+              {/* Obstacles */}
+              {result.obstacles.length > 0 && (
+                <View style={styles.infoCard}>
+                  <Text style={styles.cardTitle} accessibilityRole="header">
+                    Obstaculos detectados
+                  </Text>
+                  {result.obstacles.map((o, i) => (
+                    <Text key={i} style={styles.listItem}>
+                      • {o}
+                    </Text>
+                  ))}
+                </View>
+              )}
+
+              {/* Suggestions */}
+              {result.suggestions.length > 0 && (
+                <View style={[styles.infoCard, styles.suggestionsCard]}>
+                  <Text style={styles.cardTitle} accessibilityRole="header">
+                    Sugerencias
+                  </Text>
+                  {result.suggestions.map((s, i) => (
+                    <Text key={i} style={styles.listItem}>
+                      ✓ {s}
+                    </Text>
+                  ))}
+                </View>
+              )}
+
+              {/* Confidence */}
+              <Text
+                style={styles.confidence}
+                accessibilityLabel={`Nivel de confianza: ${Math.round(result.confidence * 100)} por ciento`}
+              >
+                Confianza: {Math.round(result.confidence * 100)}%
               </Text>
-            </View>
+            </>
           )}
 
           <TouchableOpacity
@@ -165,6 +323,9 @@ export default function CameraScreen({ onClose }: CameraScreenProps) {
           </View>
 
           <View style={styles.bottomBar}>
+            <Text style={styles.profileHint}>
+              Perfil: {profileLabel(profile)}
+            </Text>
             <TouchableOpacity
               style={styles.captureBtn}
               onPress={handleCapture}
@@ -185,6 +346,17 @@ export default function CameraScreen({ onClose }: CameraScreenProps) {
       </CameraView>
     </View>
   );
+}
+
+function profileLabel(p: string): string {
+  const labels: Record<string, string> = {
+    standard: "Estandar",
+    visual_disability: "Discapacidad visual",
+    reduced_mobility: "Movilidad reducida",
+    deaf: "Persona sorda",
+    easy_read: "Lectura facil",
+  };
+  return labels[p] ?? p;
 }
 
 const styles = StyleSheet.create({
@@ -210,6 +382,8 @@ const styles = StyleSheet.create({
     paddingTop: 48,
     paddingHorizontal: 16,
     flexDirection: "row",
+    backgroundColor: "rgba(0,0,0,0.4)",
+    paddingBottom: 8,
   },
   closeBtn: {
     minHeight: 48,
@@ -217,8 +391,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 12,
     justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-    borderRadius: 8,
   },
   closeText: {
     fontSize: 16,
@@ -233,8 +405,14 @@ const styles = StyleSheet.create({
   bottomBar: {
     alignItems: "center",
     paddingBottom: 48,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    paddingTop: 24,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    paddingTop: 16,
+  },
+  profileHint: {
+    color: "#fff",
+    fontSize: 13,
+    marginBottom: 12,
+    opacity: 0.8,
   },
   captureBtn: {
     width: 80,
@@ -286,7 +464,8 @@ const styles = StyleSheet.create({
     minWidth: 200,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 12,
+    marginTop: 16,
+    alignSelf: "center",
   },
   primaryBtnText: {
     color: "#fff",
@@ -311,12 +490,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
     minHeight: "100%",
   },
-  resultTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#1a1a2e",
+  thumbnail: {
+    width: "100%",
+    height: 200,
+    borderRadius: 12,
+    backgroundColor: "#000",
     marginBottom: 16,
-    marginTop: 16,
   },
   analyzingBox: {
     backgroundColor: "#fff",
@@ -325,21 +504,89 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
+  errorBox: {
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fca5a5",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  errorText: {
+    fontSize: 15,
+    color: "#dc2626",
+  },
   descriptionBox: {
     backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
+    marginBottom: 12,
+  },
+  cardTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#666",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 8,
   },
   descriptionText: {
-    fontSize: 16,
-    color: "#333",
+    fontSize: 17,
+    color: "#1a1a2e",
     lineHeight: 24,
+    marginBottom: 12,
   },
-  placeholderBox: {
-    backgroundColor: "#fef3c7",
+  speakBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: "#e0f2fe",
+    borderRadius: 8,
+    alignSelf: "flex-start",
+    minHeight: 36,
+    justifyContent: "center",
+  },
+  speakBtnText: {
+    fontSize: 14,
+    color: "#0369a1",
+    fontWeight: "600",
+  },
+  riskBadge: {
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  riskText: {
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  infoCard: {
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
+    marginBottom: 12,
+  },
+  suggestionsCard: {
+    backgroundColor: "#f0fdf4",
+    borderWidth: 1,
+    borderColor: "#86efac",
+  },
+  infoText: {
+    fontSize: 16,
+    color: "#1a1a2e",
+  },
+  listItem: {
+    fontSize: 15,
+    color: "#1a1a2e",
+    lineHeight: 22,
+    marginBottom: 4,
+  },
+  confidence: {
+    fontSize: 12,
+    color: "#999",
+    textAlign: "center",
+    marginTop: 4,
+    marginBottom: 8,
   },
 });
