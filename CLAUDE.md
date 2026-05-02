@@ -118,6 +118,14 @@ docs/               → Specs, setup guide, governance
 - Spec: `docs/SPEC-FASE-13.md`
 - Changelog: `docs/CHANGELOG-FASE-13.md`
 
+**Fase 14: Routing Universal con OSM Fallback** (planificada)
+- Spec: `docs/SPEC-FASE-14.md`
+- Changelog: `docs/CHANGELOG-FASE-14.md`
+
+**Fase 15: Crowdsourcing Inteligente y Aprendizaje** (planificada)
+- Spec: `docs/SPEC-FASE-15.md`
+- Changelog: `docs/CHANGELOG-FASE-15.md`
+
 **Fase 6: Optimizacion, Escalabilidad y Lanzamiento** ✅ Completada
 - Spec: `docs/SPEC-FASE-6.md`
 - Changelog: `docs/CHANGELOG-FASE-6.md`

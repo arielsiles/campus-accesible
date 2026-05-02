@@ -542,11 +542,14 @@ La recomendacion es la **Estrategia C** (Desarrollo nuevo con componentes open s
 | **Fase 11** | Camara inteligente con Vision IA | 6 semanas | Alta |
 | **Fase 12** | OCR e informacion contextual | 4 semanas | Alta |
 | **Fase 13** | Navegacion con realidad aumentada | 8 semanas | Media |
+| **Fase 14** | Routing Universal con OSM Fallback | 4 semanas | Alta |
+| **Fase 15** | Crowdsourcing Inteligente y Aprendizaje | 8 semanas | Media |
 
 > **Fases 1-8:** 40 semanas completadas.
 > **Fases 9-10:** 12 semanas (plataforma + lanzamiento).
 > **Fases 11-13:** 18 semanas (vision IA + AR).
-> **Total del proyecto:** 70 semanas (~16 meses) con un desarrollador + agentes IA.
+> **Fases 14-15:** 12 semanas (routing universal + aprendizaje colectivo).
+> **Total del proyecto:** 82 semanas (~19 meses) con un desarrollador + agentes IA.
 
 ### 8.3 Consideraciones Importantes
 
