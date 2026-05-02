@@ -110,7 +110,7 @@ docs/               → Specs, setup guide, governance
 - Spec: `docs/SPEC-FASE-11.md`
 - Changelog: `docs/CHANGELOG-FASE-11.md`
 
-**Fase 12: OCR e Informacion Contextual** (planificada)
+**Fase 12: OCR e Informacion Contextual** ✅ Completada
 - Spec: `docs/SPEC-FASE-12.md`
 - Changelog: `docs/CHANGELOG-FASE-12.md`
 
