@@ -14,40 +14,47 @@ type Screen = "loading" | "login" | "register" | "campus" | "map" | "profile";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("loading");
-  const { user, restoreSession } = useAuthStore();
+  const [initialized, setInitialized] = useState(false);
+  const { user, restoreSession, logout } = useAuthStore();
   const { selectedCampus, restoreSelection } = useCampusStore();
 
   useEffect(() => {
     const init = async () => {
       await restoreSession();
       await restoreSelection();
-      setScreen("ready" as Screen); // triggers re-render with resolved state
+      setInitialized(true);
     };
     init();
   }, []);
 
-  // Determine screen after init
+  // Initial routing — runs ONCE after init completes
   useEffect(() => {
-    if (screen === "loading") return;
-    if (screen === "profile") return; // don't override manual navigation
-    if (screen === "register") return;
-
-    if (!user && screen !== "login") {
-      // Show login but allow skip
-    }
+    if (!initialized) return;
+    if (screen !== "loading") return;
 
     if (selectedCampus) {
       setScreen("map");
     } else if (user) {
       setScreen("campus");
-    } else if (screen === ("ready" as Screen)) {
+    } else {
       setScreen("login");
     }
-  }, [user, selectedCampus, screen]);
+  }, [initialized]);
 
-  // Handle logout
+  // Handle login/logout transitions
   useEffect(() => {
-    if (!user && screen === "map") {
+    if (!initialized) return;
+
+    if (user && (screen === "login" || screen === "register")) {
+      // Just logged in or registered — navigate forward
+      if (selectedCampus) {
+        setScreen("map");
+      } else {
+        setScreen("campus");
+      }
+    } else if (!user && screen === "profile") {
+      // Just logged out from profile — clear campus and go to login
+      useCampusStore.setState({ selectedCampus: null });
       setScreen("login");
     }
   }, [user]);

@@ -39,12 +39,14 @@ interface MapScreenProps {
 }
 
 export default function MapScreen({ onNavigateProfile, onNavigateCampus }: MapScreenProps = {}) {
+  const authUser = useAuthStore((s) => s.user);
   const center = useMapStore((s) => s.center);
   const zoom = useMapStore((s) => s.zoom);
   const selectedRouteId = useMapStore((s) => s.selectedRouteId);
   const selectRoute = useMapStore((s) => s.selectRoute);
 
-  const { routes, loading: loadingRoutes } = useRoutes();
+  const [routesRefreshKey, setRoutesRefreshKey] = useState(0);
+  const { routes, loading: loadingRoutes } = useRoutes(routesRefreshKey);
   const { route, loading: loadingRoute, error } = useRoute(selectedRouteId);
   const { permissionStatus, requestPermission } = useLocation();
   const {
@@ -215,6 +217,7 @@ export default function MapScreen({ onNavigateProfile, onNavigateCampus }: MapSc
         onDone={() => {
           useRouteCreatorStore.getState().reset();
           setCreatorStep("idle");
+          setRoutesRefreshKey((k) => k + 1); // FR-705: refresh route list after creation
         }}
         onBack={() => setCreatorStep("annotating")}
       />
@@ -244,9 +247,25 @@ export default function MapScreen({ onNavigateProfile, onNavigateCampus }: MapSc
         {route && <WaypointMarker routeData={route} />}
       </MapView>
 
-      {/* FR-206: Search overlay */}
+      {/* FR-206: Search overlay with profile FAB */}
       <View style={styles.searchOverlay}>
-        <SearchBar onSearch={handleSearch} onClear={handleClearSearch} />
+        <View style={styles.searchRow}>
+          {onNavigateProfile && (
+            <TouchableOpacity
+              style={styles.profileFab}
+              onPress={onNavigateProfile}
+              accessibilityLabel={authUser ? "Mi perfil" : "Iniciar sesion"}
+              accessibilityRole="button"
+            >
+              <Text style={styles.profileFabText}>
+                {authUser?.name?.charAt(0)?.toUpperCase() ?? "👤"}
+              </Text>
+            </TouchableOpacity>
+          )}
+          <View style={styles.searchBarContainer}>
+            <SearchBar onSearch={handleSearch} onClear={handleClearSearch} />
+          </View>
+        </View>
         {showSearchResults && (searchResults.length > 0 || searchLoading) && (
           <View style={styles.searchResultsContainer}>
             <SearchResults
@@ -394,24 +413,6 @@ export default function MapScreen({ onNavigateProfile, onNavigateCampus }: MapSc
           </Text>
           <Text style={styles.reportFabText}>Reportar</Text>
         </TouchableOpacity>
-      )}
-
-      {/* FR-901, FR-902: Profile and campus buttons */}
-      {!selectedDestination && !showSearchResults && (
-        <View style={styles.topLeftFabs}>
-          {onNavigateProfile && (
-            <TouchableOpacity
-              style={styles.profileFab}
-              onPress={onNavigateProfile}
-              accessibilityLabel={useAuthStore.getState().user ? "Mi perfil" : "Iniciar sesión"}
-              accessibilityRole="button"
-            >
-              <Text style={styles.profileFabText}>
-                {useAuthStore.getState().user?.name?.charAt(0)?.toUpperCase() ?? "👤"}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
       )}
 
       <PermissionRequestModal
@@ -709,13 +710,13 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#ffffff",
   },
-  topLeftFabs: {
-    position: "absolute",
-    top: 50,
-    left: 16,
-    zIndex: 5,
+  searchRow: {
     flexDirection: "row",
+    alignItems: "center",
     gap: 8,
+  },
+  searchBarContainer: {
+    flex: 1,
   },
   profileFab: {
     width: 44,

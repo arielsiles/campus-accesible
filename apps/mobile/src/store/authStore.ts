@@ -66,6 +66,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: async () => {
     await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
     await AsyncStorage.removeItem(AUTH_USER_KEY);
+    await AsyncStorage.removeItem("@campus-gps/selected-campus");
     set({ user: null, token: null, error: null });
   },
 

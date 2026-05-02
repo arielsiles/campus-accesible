@@ -9,7 +9,10 @@ interface UseRoutesResult {
   error: string | null;
 }
 
-export function useRoutes(): UseRoutesResult {
+/**
+ * @param refreshKey — bump this number to force a refetch (use after creating a new route)
+ */
+export function useRoutes(refreshKey: number = 0): UseRoutesResult {
   const [routes, setRoutes] = useState<RouteListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +43,7 @@ export function useRoutes(): UseRoutesResult {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshKey]);
 
   return { routes, loading, error };
 }

@@ -3,7 +3,7 @@ import { cachedFetch, invalidateCache } from "./apiCache";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ?? "https://unexcludable-blythe-starchily.ngrok-free.dev/api";
+  process.env.EXPO_PUBLIC_API_URL ?? "https://campusgps.reptil.us/api";
 
 interface RequestOptions {
   method?: string;
