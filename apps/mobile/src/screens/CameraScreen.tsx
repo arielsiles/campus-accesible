@@ -16,9 +16,11 @@ import { imageToBase64, compressImage } from "../services/cameraService";
 import { describeImage, type VisionDescribeResponse } from "../services/visionService";
 import { useAccessibilityStore } from "../store/accessibilityStore";
 import { useLocationStore } from "../store/locationStore";
+import { useCaptureStore } from "../store/captureStore";
 
 interface CameraScreenProps {
   onClose: () => void;
+  onOpenHistory?: () => void;
 }
 
 const RISK_LABELS: Record<string, { label: string; color: string }> = {
@@ -37,7 +39,7 @@ const SURFACE_LABELS: Record<string, string> = {
   unknown: "Sin determinar",
 };
 
-export default function CameraScreen({ onClose }: CameraScreenProps) {
+export default function CameraScreen({ onClose, onOpenHistory }: CameraScreenProps) {
   const { permission, requestPermission } = useCamera();
   const cameraRef = useRef<CameraView | null>(null);
   const [facing] = useState<CameraType>("back");
@@ -46,8 +48,10 @@ export default function CameraScreen({ onClose }: CameraScreenProps) {
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<VisionDescribeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [savedToHistory, setSavedToHistory] = useState(false);
   const profile = useAccessibilityStore((s) => s.profile);
   const coords = useLocationStore((s) => s.coords);
+  const addCapture = useCaptureStore((s) => s.add);
 
   // FR-1102: Stop TTS when screen unmounts
   useEffect(() => {
@@ -125,6 +129,7 @@ export default function CameraScreen({ onClose }: CameraScreenProps) {
     setAnalyzing(true);
     setError(null);
     setResult(null);
+    setSavedToHistory(false);
     try {
       // NFR-1101: Resize + compress to keep payload under server limit
       const compressedUri = await compressImage(uri, 1024, 0.6);
@@ -143,6 +148,24 @@ export default function CameraScreen({ onClose }: CameraScreenProps) {
         rate: 1.0,
         pitch: 1.0,
       });
+      // FR-1104: Auto-save to history
+      try {
+        await addCapture({
+          sourceUri: compressedUri,
+          description: response.description,
+          obstacles: response.obstacles,
+          surface: response.surface,
+          riskLevel: response.riskLevel,
+          suggestions: response.suggestions,
+          confidence: response.confidence,
+          latitude: coords?.latitude,
+          longitude: coords?.longitude,
+          profile,
+        });
+        setSavedToHistory(true);
+      } catch {
+        // History save errors should not block the user from seeing results
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error en analisis";
       setError(message);
@@ -173,15 +196,25 @@ export default function CameraScreen({ onClose }: CameraScreenProps) {
     const risk = result ? RISK_LABELS[result.riskLevel] : null;
     return (
       <View style={styles.container}>
-        <View style={styles.headerBar}>
+        <View style={styles.resultHeader}>
           <TouchableOpacity
             onPress={onClose}
             style={styles.closeBtn}
             accessibilityRole="button"
             accessibilityLabel="Cerrar camara y volver al mapa"
           >
-            <Text style={styles.closeText}>← Volver</Text>
+            <Text style={styles.closeTextLight}>← Volver</Text>
           </TouchableOpacity>
+          {onOpenHistory && (
+            <TouchableOpacity
+              onPress={onOpenHistory}
+              style={styles.historyBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Ver historial de capturas"
+            >
+              <Text style={styles.historyBtnText}>📋 Historial</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <ScrollView contentContainerStyle={styles.resultContainer}>
@@ -291,6 +324,15 @@ export default function CameraScreen({ onClose }: CameraScreenProps) {
               >
                 Confianza: {Math.round(result.confidence * 100)}%
               </Text>
+
+              {savedToHistory && (
+                <Text
+                  style={styles.savedHint}
+                  accessibilityLabel="Guardado en el historial"
+                >
+                  ✓ Guardado en historial
+                </Text>
+              )}
             </>
           )}
 
@@ -320,6 +362,16 @@ export default function CameraScreen({ onClose }: CameraScreenProps) {
             >
               <Text style={styles.closeTextLight}>← Cerrar</Text>
             </TouchableOpacity>
+            {onOpenHistory && (
+              <TouchableOpacity
+                onPress={onOpenHistory}
+                style={styles.historyBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Ver historial de capturas"
+              >
+                <Text style={styles.historyBtnText}>📋 Historial</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <View style={styles.bottomBar}>
@@ -382,8 +434,53 @@ const styles = StyleSheet.create({
     paddingTop: 48,
     paddingHorizontal: 16,
     flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     backgroundColor: "rgba(0,0,0,0.4)",
     paddingBottom: 8,
+  },
+  resultHeader: {
+    paddingTop: 48,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#1a1a2e",
+    paddingBottom: 12,
+  },
+  historyBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 8,
+    minHeight: 40,
+    justifyContent: "center",
+  },
+  historyBtnText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  historyBtnLight: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "#1a1a2e",
+    borderRadius: 8,
+    minHeight: 40,
+    justifyContent: "center",
+  },
+  historyBtnLightText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  savedHint: {
+    fontSize: 13,
+    color: "#16a34a",
+    textAlign: "center",
+    marginTop: 4,
+    marginBottom: 12,
+    fontWeight: "600",
   },
   closeBtn: {
     minHeight: 48,

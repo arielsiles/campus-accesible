@@ -8,10 +8,19 @@ import RegisterScreen from "./src/screens/RegisterScreen";
 import CampusSelectionScreen from "./src/screens/CampusSelectionScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
 import CameraScreen from "./src/screens/CameraScreen";
+import CaptureHistoryScreen from "./src/screens/CaptureHistoryScreen";
 import { useAuthStore } from "./src/store/authStore";
 import { useCampusStore } from "./src/store/campusStore";
 
-type Screen = "loading" | "login" | "register" | "campus" | "map" | "profile" | "camera";
+type Screen =
+  | "loading"
+  | "login"
+  | "register"
+  | "campus"
+  | "map"
+  | "profile"
+  | "camera"
+  | "captureHistory";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("loading");
@@ -119,7 +128,19 @@ export default function App() {
     return (
       <>
         <StatusBar style="light" />
-        <CameraScreen onClose={() => setScreen("map")} />
+        <CameraScreen
+          onClose={() => setScreen("map")}
+          onOpenHistory={() => setScreen("captureHistory")}
+        />
+      </>
+    );
+  }
+
+  if (screen === "captureHistory") {
+    return (
+      <>
+        <StatusBar style="light" />
+        <CaptureHistoryScreen onBack={() => setScreen("camera")} />
       </>
     );
   }
