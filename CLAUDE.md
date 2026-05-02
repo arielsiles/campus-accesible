@@ -114,7 +114,7 @@ docs/               → Specs, setup guide, governance
 - Spec: `docs/SPEC-FASE-12.md`
 - Changelog: `docs/CHANGELOG-FASE-12.md`
 
-**Fase 13: Navegacion con Realidad Aumentada** (planificada)
+**Fase 13: Navegacion con Realidad Aumentada** ✅ Completada
 - Spec: `docs/SPEC-FASE-13.md`
 - Changelog: `docs/CHANGELOG-FASE-13.md`
 

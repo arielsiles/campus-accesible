@@ -16,6 +16,7 @@ import GpsLostAlert from "../components/GpsLostAlert";
 import ArrivalModal from "../components/ArrivalModal";
 import ContinuousScanOverlay from "../components/ContinuousScanOverlay";
 import QuickReportBanner from "../components/QuickReportBanner";
+import ARNavigationScreen from "./ARNavigationScreen";
 import { useNavigation } from "../hooks/useNavigation";
 import { useSnapToRoute } from "../hooks/useSnapToRoute";
 import { useContinuousScan } from "../hooks/useContinuousScan";
@@ -93,6 +94,9 @@ export default function NavigationScreen() {
     }
   }, [isNavigating]);
 
+  // FR-1301: AR navigation mode toggle
+  const [arMode, setArMode] = useState(false);
+
   // FR-1105: Continuous scan during navigation
   const continuousScan = useContinuousScan();
   const [reportBannerKey, setReportBannerKey] = useState(0);
@@ -134,6 +138,33 @@ export default function NavigationScreen() {
   if (!route) return null;
 
   const destinationName = route.destination.name;
+
+  // FR-1301: AR mode renders a separate screen with camera background
+  if (arMode) {
+    const waypoints = (route.geojson?.features ?? [])
+      .filter((f: any) => f.properties?.featureType === "waypoint")
+      .map((f: any) => ({
+        id: String(f.properties.waypointId ?? f.properties.id ?? Math.random()),
+        name: String(f.properties.name ?? "Punto"),
+        type: f.properties.waypointType,
+        description: f.properties.description,
+        latitude: f.geometry.coordinates[1],
+        longitude: f.geometry.coordinates[0],
+      }));
+
+    const distanceToNextM = currentInstruction?.distance ?? 0;
+    const instructionText = currentInstruction?.description ?? "Sigue la ruta";
+
+    return (
+      <ARNavigationScreen
+        onSwitchToMap={() => setArMode(false)}
+        instructionText={instructionText}
+        distanceToNextM={distanceToNextM}
+        nextBearing={currentInstruction?.bearing}
+        waypoints={waypoints}
+      />
+    );
+  }
 
   return (
     <View
@@ -201,6 +232,18 @@ export default function NavigationScreen() {
         )}
       </View>
 
+      {/* FR-1301: AR mode FAB */}
+      <TouchableOpacity
+        style={styles.arFab}
+        onPress={() => setArMode(true)}
+        accessibilityRole="button"
+        accessibilityLabel="Cambiar a navegacion con realidad aumentada"
+        accessibilityHint="Muestra indicaciones sobre la vista de la camara"
+      >
+        <Text style={styles.arFabIcon} accessibilityElementsHidden>📷</Text>
+        <Text style={styles.arFabText}>AR</Text>
+      </TouchableOpacity>
+
       {/* FR-208: Bottom overlay — progress + controls */}
       <View style={styles.bottomOverlay}>
         <View style={styles.progressContainer}>
@@ -233,6 +276,33 @@ const styles = StyleSheet.create({
   },
   alerts: {
     gap: 8,
+  },
+  arFab: {
+    position: "absolute",
+    bottom: 168,
+    right: 16,
+    backgroundColor: "#7c3aed",
+    borderRadius: 28,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    minHeight: 48,
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    zIndex: 15,
+  },
+  arFabIcon: {
+    fontSize: 18,
+  },
+  arFabText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "700",
   },
   scanToggle: {
     backgroundColor: "#fff",
