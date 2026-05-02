@@ -18,7 +18,14 @@ import ContinuousScanOverlay from "../components/ContinuousScanOverlay";
 import QuickReportBanner from "../components/QuickReportBanner";
 import ApproachLegPolyline from "../components/ApproachLegPolyline";
 import RouteSourceBadge from "../components/RouteSourceBadge";
+import RouteFeedbackModal from "../components/RouteFeedbackModal";
 import ARNavigationScreen from "./ARNavigationScreen";
+import {
+  startTelemetry,
+  stopTelemetry,
+  recordTracePoint,
+} from "../services/telemetryService";
+import { useAccessibilityStore } from "../store/accessibilityStore";
 import { useNavigation } from "../hooks/useNavigation";
 import { useSnapToRoute } from "../hooks/useSnapToRoute";
 import { useContinuousScan } from "../hooks/useContinuousScan";
@@ -98,6 +105,37 @@ export default function NavigationScreen() {
 
   // FR-1301: AR navigation mode toggle
   const [arMode, setArMode] = useState(false);
+
+  // FR-1505: Feedback modal state
+  const [showFeedback, setShowFeedback] = useState(false);
+
+  // FR-1501: Telemetry lifecycle
+  const profile = useAccessibilityStore((s) => s.profile);
+  useEffect(() => {
+    if (!isNavigating) return;
+    startTelemetry(profile);
+    return () => {
+      stopTelemetry(profile);
+    };
+  }, [isNavigating, profile]);
+
+  // Record GPS points when telemetry is enabled
+  useEffect(() => {
+    if (!isNavigating || !coords) return;
+    recordTracePoint({
+      segmentId: snapResult?.segmentId ?? null,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      timestamp: Date.now(),
+    });
+  }, [coords?.latitude, coords?.longitude, isNavigating]);
+
+  // Show feedback modal on arrival
+  useEffect(() => {
+    if (hasArrived) {
+      setShowFeedback(true);
+    }
+  }, [hasArrived]);
 
   // FR-1105: Continuous scan during navigation
   const continuousScan = useContinuousScan();
@@ -262,9 +300,25 @@ export default function NavigationScreen() {
 
       {/* FR-208: Arrival modal */}
       <ArrivalModal
-        visible={hasArrived}
+        visible={hasArrived && !showFeedback}
         destinationName={destinationName}
         onDismiss={cancel}
+      />
+
+      {/* FR-1505: Post-navigation feedback modal */}
+      <RouteFeedbackModal
+        visible={showFeedback}
+        segmentIds={
+          (route.geojson?.features ?? [])
+            .filter((f: any) => f.properties?.featureType === "route-segment")
+            .map((f: any) => String(f.properties.segmentId ?? f.properties.id ?? ""))
+            .filter(Boolean) as string[]
+        }
+        profile={profile}
+        onClose={() => {
+          setShowFeedback(false);
+          cancel();
+        }}
       />
     </View>
   );

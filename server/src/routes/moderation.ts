@@ -113,6 +113,16 @@ moderationRoutes.post(
       await buildGraph(prisma);
     }
 
+    // FR-1508: Award/deduct reputation to the route creator
+    if (route.creatorId) {
+      const { addReputation } = await import("../services/reputationService");
+      if (action === "approved") {
+        await addReputation(prisma, route.creatorId, "route_approved");
+      } else if (action === "rejected") {
+        await addReputation(prisma, route.creatorId, "route_rejected");
+      }
+    }
+
     return c.json({
       review: {
         id: review.id,

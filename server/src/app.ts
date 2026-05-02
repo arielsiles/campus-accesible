@@ -19,6 +19,9 @@ import { userRoutes } from "./routes/users";
 import { visionRoutes } from "./routes/vision";
 import { textSimplifyRoutes } from "./routes/textSimplify";
 import { contextRoutes } from "./routes/context";
+import { telemetryRoutes } from "./routes/telemetry";
+import { feedbackRoutes } from "./routes/feedback";
+import { reweightingRoutes } from "./routes/reweighting";
 
 const app = new Hono();
 
@@ -49,6 +52,9 @@ app.route("/api", userRoutes);
 app.route("/api", visionRoutes);
 app.route("/api", textSimplifyRoutes);
 app.route("/api", contextRoutes);
+app.route("/api", telemetryRoutes);
+app.route("/api", feedbackRoutes);
+app.route("/api", reweightingRoutes);
 
 // 404 handler
 app.notFound((c) => {

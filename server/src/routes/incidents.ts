@@ -140,6 +140,76 @@ incidentRoutes.post("/incidents", async (c) => {
       ? "rejected"
       : "pending";
 
+  // FR-1504: Community validation — check for nearby existing incident of same type
+  const NEARBY_RADIUS_M = 20;
+  const nearbyExisting = await prisma.$queryRaw<
+    Array<{ id: string; confirmCount: number; status: string }>
+  >`
+    SELECT id, confirm_count AS "confirmCount", status::text AS status
+    FROM incidents
+    WHERE type::text = ${parsed.data.type}
+      AND status IN ('pending', 'validated')
+      AND (6371000 * acos(
+        LEAST(1, GREATEST(-1,
+          cos(radians(${parsed.data.latitude})) * cos(radians(latitude)) *
+          cos(radians(longitude) - radians(${parsed.data.longitude})) +
+          sin(radians(${parsed.data.latitude})) * sin(radians(latitude))
+        ))
+      )) <= ${NEARBY_RADIUS_M}
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+
+  if (nearbyExisting.length > 0) {
+    const existing = nearbyExisting[0];
+    // Same device cannot inflate the count
+    const alreadyConfirmed = await prisma.incidentConfirm.findUnique({
+      where: {
+        incidentId_deviceId: {
+          incidentId: existing.id,
+          deviceId: parsed.data.deviceId,
+        },
+      },
+    });
+
+    if (!alreadyConfirmed) {
+      const newConfirmCount = existing.confirmCount + 1;
+      const shouldAutoValidate =
+        existing.status === "pending" && newConfirmCount >= 3;
+
+      await prisma.$transaction([
+        prisma.incidentConfirm.create({
+          data: {
+            incidentId: existing.id,
+            deviceId: parsed.data.deviceId,
+          },
+        }),
+        prisma.incident.update({
+          where: { id: existing.id },
+          data: {
+            confirmCount: newConfirmCount,
+            lastConfirmedAt: new Date(),
+            ...(shouldAutoValidate && { status: "validated" as const }),
+          },
+        }),
+      ]);
+    }
+
+    const updated = await prisma.incident.findUnique({
+      where: { id: existing.id },
+    });
+    return c.json(
+      {
+        incident: updated,
+        deduplicated: true,
+        message: alreadyConfirmed
+          ? "Ya habias reportado esta incidencia."
+          : "Esta incidencia ya estaba reportada. Hemos sumado tu confirmacion.",
+      },
+      200
+    );
+  }
+
   const incident = await prisma.incident.create({
     data: {
       deviceId: parsed.data.deviceId,
@@ -155,6 +225,7 @@ incidentRoutes.post("/incidents", async (c) => {
       aiConfidence: validation.confidence,
       aiReason: validation.reason,
       validationSource: validation.source,
+      confirmCount: 1,
     },
   });
 

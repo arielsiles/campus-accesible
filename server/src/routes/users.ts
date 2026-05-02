@@ -50,6 +50,8 @@ userRoutes.get("/users/me", requireAuth(), async (c) => {
       email: true,
       name: true,
       role: true,
+      reputation: true,
+      level: true,
       createdAt: true,
       _count: {
         select: {
@@ -71,6 +73,8 @@ userRoutes.get("/users/me", requireAuth(), async (c) => {
     email: dbUser.email,
     name: dbUser.name,
     role: dbUser.role,
+    reputation: dbUser.reputation,
+    level: dbUser.level,
     createdAt: dbUser.createdAt.toISOString(),
     routeCount: dbUser._count.routes,
   });

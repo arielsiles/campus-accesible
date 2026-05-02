@@ -12,7 +12,7 @@ datasource db {
   extensions = [postgis]
 }
 
-// FR-901: User authentication and roles
+// FR-901, FR-1508: User authentication, roles, and reputation
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -22,10 +22,23 @@ model User {
   deviceId  String?  @map("device_id") // linked from anonymous Fase 5 usage
   createdAt DateTime @default(now()) @map("created_at")
 
+  // FR-1508: Reputation system
+  reputation Int             @default(0)
+  level      ReputationLevel @default(bronze)
+
   routes  Route[]       @relation("CreatedRoutes")
   reviews RouteReview[]
 
   @@map("users")
+}
+
+// FR-1508: Contributor reputation tier
+enum ReputationLevel {
+  bronze
+  silver
+  gold
+
+  @@map("reputation_level")
 }
 
 // FR-902: Campus multi-location model
@@ -260,7 +273,7 @@ enum IncidentStatus {
   @@map("incident_status")
 }
 
-/// FR-501: User-reported incident on a route segment
+/// FR-501, FR-1504: User-reported incident with community validation
 model Incident {
   id          String         @id @default(cuid())
   deviceId    String         @map("device_id")
@@ -282,6 +295,11 @@ model Incident {
   segmentId   String?        @map("segment_id")
   segment     RouteSegment?  @relation(fields: [segmentId], references: [id])
 
+  // FR-1504: Community validation
+  confirmCount     Int       @default(1) @map("confirm_count")
+  lastConfirmedAt  DateTime? @map("last_confirmed_at")
+  confirms         IncidentConfirm[]
+
   createdAt   DateTime       @default(now()) @map("created_at")
   updatedAt   DateTime       @updatedAt @map("updated_at")
   resolvedAt  DateTime?      @map("resolved_at")
@@ -290,6 +308,19 @@ model Incident {
   @@index([segmentId])
   @@index([deviceId])
   @@map("incidents")
+}
+
+// FR-1504: Track unique users who confirmed an incident (prevents double-counting)
+model IncidentConfirm {
+  id         String   @id @default(cuid())
+  incidentId String   @map("incident_id")
+  deviceId   String   @map("device_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@unique([incidentId, deviceId])
+  @@map("incident_confirms")
 }
 
 /// FR-505: Push notification subscription
@@ -329,4 +360,47 @@ model RateLimitEntry {
   @@unique([identity, endpoint])
   @@index([windowEnd])
   @@map("rate_limit_entries")
+}
+
+/// FR-1501: Anonymous GPS traces for crowdsourced learning (24h TTL)
+model GpsTrace {
+  id        String   @id @default(cuid())
+  segmentId String?  @map("segment_id")
+  latitude  Float
+  longitude Float
+  timestamp DateTime
+  profile   String   // accessibility profile
+  expiresAt DateTime @map("expires_at")
+
+  @@index([segmentId, timestamp])
+  @@index([expiresAt])
+  @@map("gps_traces")
+}
+
+/// FR-1506: Aggregated metrics per route segment (used for re-weighting)
+model SegmentMetrics {
+  id                String   @id @default(cuid())
+  segmentId         String   @unique @map("segment_id")
+  usageCount        Int      @default(0) @map("usage_count")
+  avgTraversalTimeS Float    @default(0) @map("avg_traversal_time_s")
+  offRouteRate      Float    @default(0) @map("off_route_rate")
+  feedbackScoreAvg  Float    @default(0) @map("feedback_score_avg")
+  feedbackCount     Int      @default(0) @map("feedback_count")
+  lastUsedAt        DateTime? @map("last_used_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("segment_metrics")
+}
+
+/// FR-1505: Post-navigation user feedback
+model RouteFeedback {
+  id         String   @id @default(cuid())
+  rating     String   // "good" | "ok" | "bad"
+  comment    String?
+  segmentIds String[] @map("segment_ids")
+  profile    String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("route_feedback")
 }

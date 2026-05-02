@@ -1,4 +1,4 @@
-// FR-906: User profile screen with contribution history
+// FR-906, FR-1508, NFR-1501: Profile + reputation + privacy toggle
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -7,12 +7,38 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Switch,
 } from "react-native";
 import { useAuthStore } from "../store/authStore";
 import { useCampusStore } from "../store/campusStore";
+import { usePrivacyStore } from "../store/privacyStore";
+import { clearTelemetryQueue } from "../services/telemetryService";
 import { apiGet } from "../services/apiClient";
 import { USER_ROLE_LABELS, ROUTE_STATUS_LABELS } from "@campus-gps/shared-types";
 import type { RouteStatus } from "@campus-gps/shared-types";
+
+interface UserMeResponse {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  reputation: number;
+  level: "bronze" | "silver" | "gold";
+  routeCount: number;
+  createdAt: string;
+}
+
+const LEVEL_LABEL: Record<"bronze" | "silver" | "gold", string> = {
+  bronze: "Bronce",
+  silver: "Plata",
+  gold: "Oro",
+};
+
+const LEVEL_EMOJI: Record<"bronze" | "silver" | "gold", string> = {
+  bronze: "🥉",
+  silver: "🥈",
+  gold: "🥇",
+};
 
 interface UserRouteItem {
   id: string;
@@ -28,14 +54,30 @@ interface ProfileScreenProps {
 export default function ProfileScreen({ onBack }: ProfileScreenProps) {
   const { user, logout } = useAuthStore();
   const { selectedCampus } = useCampusStore();
+  const { telemetryEnabled, setTelemetryEnabled, load: loadPrivacy } = usePrivacyStore();
   const [routes, setRoutes] = useState<UserRouteItem[]>([]);
+  const [me, setMe] = useState<UserMeResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadPrivacy();
+  }, [loadPrivacy]);
 
   useEffect(() => {
     if (user) {
       loadUserRoutes();
+      loadMe();
     }
   }, [user]);
+
+  const loadMe = async () => {
+    try {
+      const data = await apiGet<UserMeResponse>("/users/me");
+      setMe(data);
+    } catch {
+      // ignore
+    }
+  };
 
   const loadUserRoutes = async () => {
     try {
@@ -101,6 +143,57 @@ export default function ProfileScreen({ onBack }: ProfileScreenProps) {
               Campus: {selectedCampus.name}
             </Text>
           )}
+        </View>
+
+        {/* FR-1508: Reputation card */}
+        {me && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Reputacion</Text>
+            <View style={styles.reputationRow}>
+              <Text style={styles.reputationEmoji} accessibilityElementsHidden>
+                {LEVEL_EMOJI[me.level]}
+              </Text>
+              <View style={styles.reputationInfo}>
+                <Text style={styles.reputationLevel}>
+                  Nivel {LEVEL_LABEL[me.level]}
+                </Text>
+                <Text style={styles.reputationPoints}>
+                  {me.reputation} {me.reputation === 1 ? "punto" : "puntos"}
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* NFR-1501: Privacy / telemetry toggle */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Privacidad</Text>
+          <View style={styles.privacyRow}>
+            <View style={styles.privacyText}>
+              <Text style={styles.privacyLabel}>Compartir datos anonimos</Text>
+              <Text style={styles.privacyHint}>
+                Tus trazas GPS anonimas ayudan a mejorar las rutas para todos.
+                Sin identificadores. Puedes desactivarlo en cualquier momento.
+              </Text>
+            </View>
+            <Switch
+              value={telemetryEnabled}
+              onValueChange={setTelemetryEnabled}
+              accessibilityLabel="Compartir datos anonimos para mejorar el sistema"
+              trackColor={{ false: "#d1d5db", true: "#22c55e" }}
+              thumbColor="#fff"
+            />
+          </View>
+          <TouchableOpacity
+            style={styles.clearDataBtn}
+            onPress={async () => {
+              await clearTelemetryQueue();
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Borrar datos de telemetria locales"
+          >
+            <Text style={styles.clearDataText}>Borrar datos locales</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
@@ -238,6 +331,51 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#1a1a2e",
     marginBottom: 12,
+  },
+  reputationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+  },
+  reputationEmoji: { fontSize: 36 },
+  reputationInfo: { flex: 1 },
+  reputationLevel: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1a1a2e",
+  },
+  reputationPoints: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 2,
+  },
+  privacyRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    marginBottom: 12,
+  },
+  privacyText: { flex: 1 },
+  privacyLabel: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#1a1a2e",
+  },
+  privacyHint: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 4,
+    lineHeight: 16,
+  },
+  clearDataBtn: {
+    paddingVertical: 8,
+    minHeight: 36,
+    alignSelf: "flex-start",
+  },
+  clearDataText: {
+    fontSize: 13,
+    color: "#dc2626",
+    textDecorationLine: "underline",
   },
   emptyText: {
     fontSize: 14,
