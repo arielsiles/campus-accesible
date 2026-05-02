@@ -122,7 +122,7 @@ docs/               → Specs, setup guide, governance
 - Spec: `docs/SPEC-FASE-14.md`
 - Changelog: `docs/CHANGELOG-FASE-14.md`
 
-**Fase 15: Crowdsourcing Inteligente y Aprendizaje** (planificada)
+**Fase 15: Crowdsourcing Inteligente y Aprendizaje** ✅ Completada
 - Spec: `docs/SPEC-FASE-15.md`
 - Changelog: `docs/CHANGELOG-FASE-15.md`
 
