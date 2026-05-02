@@ -16,6 +16,8 @@ import GpsLostAlert from "../components/GpsLostAlert";
 import ArrivalModal from "../components/ArrivalModal";
 import ContinuousScanOverlay from "../components/ContinuousScanOverlay";
 import QuickReportBanner from "../components/QuickReportBanner";
+import ApproachLegPolyline from "../components/ApproachLegPolyline";
+import RouteSourceBadge from "../components/RouteSourceBadge";
 import ARNavigationScreen from "./ARNavigationScreen";
 import { useNavigation } from "../hooks/useNavigation";
 import { useSnapToRoute } from "../hooks/useSnapToRoute";
@@ -174,6 +176,9 @@ export default function NavigationScreen() {
     >
       <MapView center={mapCenter} zoom={17}>
         <RoutePolyline routeData={route.geojson} />
+        {route.approachLegs && route.approachLegs.length > 0 && (
+          <ApproachLegPolyline legs={route.approachLegs} />
+        )}
         <WaypointMarker routeData={route.geojson} />
         <UserLocationMarker />
       </MapView>
@@ -186,6 +191,9 @@ export default function NavigationScreen() {
 
       {/* FR-208: Top overlay — instruction banner */}
       <View style={styles.topOverlay} ref={instructionRef}>
+        {route.source && route.source !== "graph" && (
+          <RouteSourceBadge source={route.source} />
+        )}
         {currentInstruction && (
           <InstructionBanner instruction={currentInstruction} />
         )}

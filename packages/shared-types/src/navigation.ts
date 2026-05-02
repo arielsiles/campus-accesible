@@ -34,6 +34,22 @@ export interface NavigationInstruction {
   bearing: number; // degrees 0-360
 }
 
+// FR-1406: Approach leg — straight-line walk between user GPS and the
+// nearest graph node (or between graph node and arbitrary destination).
+// Rendered as a dashed line in the UI to differentiate from mapped segments.
+export interface ApproachLeg {
+  position: "start" | "end";
+  fromCoords: [number, number]; // [lng, lat]
+  toCoords: [number, number]; // [lng, lat]
+  distanceM: number;
+  bearingDeg: number;
+  /** Spanish instruction shown in turn-by-turn ("Avanza 80m al norte hacia el inicio") */
+  instructionText: string;
+}
+
+// FR-1404, FR-1407: Source of the route data
+export type RouteSource = "graph" | "osm" | "hybrid";
+
 export interface CalculatedRoute {
   origin: WaypointSummary;
   destination: WaypointSummary;
@@ -42,6 +58,12 @@ export interface CalculatedRoute {
   waypoints: WaypointSummary[];
   instructions: NavigationInstruction[];
   geojson: RouteFeatureCollection;
+
+  // FR-1406: Optional approach legs at start and/or end
+  approachLegs?: ApproachLeg[];
+
+  // FR-1404, FR-1407: Where this route came from
+  source?: RouteSource;
 }
 
 export interface RouteCalculationResponse {

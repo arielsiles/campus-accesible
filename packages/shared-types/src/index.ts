@@ -71,12 +71,14 @@ export type {
 } from "./auth";
 export { ROUTE_STATUS_LABELS, USER_ROLE_LABELS } from "./auth";
 
-// FR-204, FR-207: Navigation types
+// FR-204, FR-207, FR-1406: Navigation types
 export type {
   RouteCalculationRequest,
   WaypointSummary,
   NavigationInstruction,
   CalculatedRoute,
+  ApproachLeg,
+  RouteSource,
   RouteCalculationResponse,
   SearchResult,
   SearchResponse,

@@ -118,7 +118,7 @@ docs/               → Specs, setup guide, governance
 - Spec: `docs/SPEC-FASE-13.md`
 - Changelog: `docs/CHANGELOG-FASE-13.md`
 
-**Fase 14: Routing Universal con OSM Fallback** (planificada)
+**Fase 14: Routing Universal con OSM Fallback** ✅ Completada
 - Spec: `docs/SPEC-FASE-14.md`
 - Changelog: `docs/CHANGELOG-FASE-14.md`
 
