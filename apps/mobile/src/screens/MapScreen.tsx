@@ -6,6 +6,7 @@ import {
   Text,
   ActivityIndicator,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import type { SearchResult, CalculatedRoute } from "@campus-gps/shared-types";
 import MapView from "../components/MapView";
@@ -440,49 +441,74 @@ export default function MapScreen({
       )}
 
       {showRouteSelector && (
-        <View style={styles.routeList}>
-          <Text style={styles.routeListTitle} accessibilityRole="header">
-            Rutas disponibles
-          </Text>
-          {routes.map((r) => (
-            <View
-              key={r.id}
-              style={[
-                styles.routeListItem,
-                selectedRouteId === r.id && styles.routeListItemSelected,
-              ]}
-            >
+        <>
+          <TouchableOpacity
+            style={styles.routeListBackdrop}
+            activeOpacity={1}
+            onPress={() => setShowRouteSelector(false)}
+            accessibilityLabel="Cerrar lista de rutas"
+            accessibilityRole="button"
+          />
+          <View style={styles.routeListSheet}>
+            <View style={styles.routeListHeader}>
+              <Text style={styles.routeListTitle} accessibilityRole="header">
+                Rutas disponibles ({routes.length})
+              </Text>
               <TouchableOpacity
-                style={styles.routeListItemMain}
-                onPress={() => {
-                  selectRoute(r.id);
-                }}
-                accessibilityLabel={`${r.name}${selectedRouteId === r.id ? ", seleccionada" : ""}`}
+                onPress={() => setShowRouteSelector(false)}
+                style={styles.routeListClose}
+                accessibilityLabel="Cerrar"
                 accessibilityRole="button"
-                accessibilityHint="Mostrar esta ruta en el mapa"
               >
-                <Text style={[
-                  styles.routeListItemText,
-                  selectedRouteId === r.id && styles.routeListItemTextSelected,
-                ]}>
-                  {r.name}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.routeNavigateBtn}
-                onPress={() => {
-                  selectRoute(r.id);
-                  setNavigateRouteId(r.id);
-                }}
-                accessibilityLabel={`Navegar por la ruta ${r.name}`}
-                accessibilityRole="button"
-                accessibilityHint="Elegir direccion y empezar navegacion"
-              >
-                <Text style={styles.routeNavigateBtnText}>Navegar →</Text>
+                <Text style={styles.routeListCloseText}>✕</Text>
               </TouchableOpacity>
             </View>
-          ))}
-        </View>
+            <ScrollView
+              style={styles.routeListScroll}
+              contentContainerStyle={styles.routeListScrollContent}
+              showsVerticalScrollIndicator
+            >
+              {routes.map((r) => (
+                <View
+                  key={r.id}
+                  style={[
+                    styles.routeListItem,
+                    selectedRouteId === r.id && styles.routeListItemSelected,
+                  ]}
+                >
+                  <TouchableOpacity
+                    style={styles.routeListItemMain}
+                    onPress={() => {
+                      selectRoute(r.id);
+                    }}
+                    accessibilityLabel={`${r.name}${selectedRouteId === r.id ? ", seleccionada" : ""}`}
+                    accessibilityRole="button"
+                    accessibilityHint="Mostrar esta ruta en el mapa"
+                  >
+                    <Text style={[
+                      styles.routeListItemText,
+                      selectedRouteId === r.id && styles.routeListItemTextSelected,
+                    ]}>
+                      {r.name}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.routeNavigateBtn}
+                    onPress={() => {
+                      selectRoute(r.id);
+                      setNavigateRouteId(r.id);
+                    }}
+                    accessibilityLabel={`Navegar por la ruta ${r.name}`}
+                    accessibilityRole="button"
+                    accessibilityHint="Elegir direccion y empezar navegacion"
+                  >
+                    <Text style={styles.routeNavigateBtnText}>Navegar →</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </>
       )}
 
       {/* F2: Direction picker modal */}
@@ -856,27 +882,65 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#ffffff",
   },
-  routeList: {
+  routeListBackdrop: {
     position: "absolute",
-    bottom: 280,
-    right: 16,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    zIndex: 50,
+  },
+  routeListSheet: {
+    position: "absolute",
+    top: 110,
     left: 16,
-    zIndex: 20,
+    right: 16,
+    bottom: 24,
+    zIndex: 60,
     backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 12,
-    elevation: 8,
+    borderRadius: 16,
+    padding: 0,
+    elevation: 12,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    maxHeight: 300,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    overflow: "hidden",
+  },
+  routeListHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+    backgroundColor: "#f9fafb",
+  },
+  routeListClose: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  routeListCloseText: {
+    fontSize: 20,
+    color: "#666",
+    fontWeight: "600",
+  },
+  routeListScroll: {
+    flex: 1,
+  },
+  routeListScrollContent: {
+    padding: 12,
   },
   routeListTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "700",
-    color: "#333",
-    marginBottom: 8,
+    color: "#1a1a2e",
+    flex: 1,
   },
   routeListItem: {
     paddingVertical: 8,

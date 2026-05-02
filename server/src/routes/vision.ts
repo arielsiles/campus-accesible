@@ -10,6 +10,7 @@ import {
   VisionError,
   type AccessibilityProfile,
 } from "../services/visionService";
+import { buildVisionContext } from "../services/visionContextService";
 import { rateLimit } from "../middleware/rateLimitMiddleware";
 
 const prisma = new PrismaClient();
@@ -109,13 +110,23 @@ visionRoutes.post(
     }
 
     try {
+      // FR-1103: Enrich context with nearby waypoints / incidents / segment
+      const enrichedContext = await buildVisionContext(
+        prisma,
+        parsed.data.latitude,
+        parsed.data.longitude
+      );
+      const fullContext = [parsed.data.context, enrichedContext.contextText]
+        .filter(Boolean)
+        .join("\n\n");
+
       const result = await describeImage({
         imageBase64: parsed.data.image,
         mediaType: parsed.data.mediaType,
         profile: parsed.data.profile as AccessibilityProfile,
         latitude: parsed.data.latitude,
         longitude: parsed.data.longitude,
-        context: parsed.data.context,
+        context: fullContext || undefined,
       });
 
       // NFR-1101: Track cost
