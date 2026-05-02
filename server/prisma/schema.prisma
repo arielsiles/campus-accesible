@@ -305,3 +305,28 @@ model PushSubscription {
   @@index([segmentId])
   @@map("push_subscriptions")
 }
+
+/// FR-1102, NFR-1101: Monthly vision API usage tracking for budget caps
+model VisionUsage {
+  id          String   @id @default(cuid())
+  month       String   @unique // YYYY-MM (e.g. "2026-05")
+  totalUsd    Float    @default(0) @map("total_usd")
+  totalCalls  Int      @default(0) @map("total_calls")
+  totalErrors Int      @default(0) @map("total_errors")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("vision_usage")
+}
+
+/// FR-1102: Per-user/IP rate limiting for vision endpoint
+model RateLimitEntry {
+  id        String   @id @default(cuid())
+  identity  String   // userId or "ip:1.2.3.4"
+  endpoint  String
+  count     Int      @default(0)
+  windowEnd DateTime @map("window_end")
+
+  @@unique([identity, endpoint])
+  @@index([windowEnd])
+  @@map("rate_limit_entries")
+}

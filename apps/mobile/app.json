@@ -16,7 +16,8 @@
       "package": "com.campusgps.accesible",
       "permissions": [
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA"
       ]
     },
     "plugins": [
@@ -24,6 +25,12 @@
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Esta app necesita acceder a tu ubicación para guiarte por el campus."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Esta app usa la camara para describir el entorno con IA y ayudarte a navegar."
         }
       ],
       "@maplibre/maplibre-react-native"

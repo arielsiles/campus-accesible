@@ -7,10 +7,11 @@ import LoginScreen from "./src/screens/LoginScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
 import CampusSelectionScreen from "./src/screens/CampusSelectionScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
+import CameraScreen from "./src/screens/CameraScreen";
 import { useAuthStore } from "./src/store/authStore";
 import { useCampusStore } from "./src/store/campusStore";
 
-type Screen = "loading" | "login" | "register" | "campus" | "map" | "profile";
+type Screen = "loading" | "login" | "register" | "campus" | "map" | "profile" | "camera";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("loading");
@@ -114,6 +115,15 @@ export default function App() {
     );
   }
 
+  if (screen === "camera") {
+    return (
+      <>
+        <StatusBar style="light" />
+        <CameraScreen onClose={() => setScreen("map")} />
+      </>
+    );
+  }
+
   // Default: map screen
   return (
     <>
@@ -121,6 +131,7 @@ export default function App() {
       <MapScreen
         onNavigateProfile={() => setScreen("profile")}
         onNavigateCampus={() => setScreen("campus")}
+        onNavigateCamera={() => setScreen("camera")}
       />
     </>
   );

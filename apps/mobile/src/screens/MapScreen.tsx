@@ -36,9 +36,14 @@ import { calculateRoute } from "../services/routeCalculationService";
 interface MapScreenProps {
   onNavigateProfile?: () => void;
   onNavigateCampus?: () => void;
+  onNavigateCamera?: () => void;
 }
 
-export default function MapScreen({ onNavigateProfile, onNavigateCampus }: MapScreenProps = {}) {
+export default function MapScreen({
+  onNavigateProfile,
+  onNavigateCampus,
+  onNavigateCamera,
+}: MapScreenProps = {}) {
   const authUser = useAuthStore((s) => s.user);
   const center = useMapStore((s) => s.center);
   const zoom = useMapStore((s) => s.zoom);
@@ -324,6 +329,20 @@ export default function MapScreen({ onNavigateProfile, onNavigateCampus }: MapSc
         </View>
       )}
 
+      {/* FR-1101: Camera FAB */}
+      {!selectedDestination && !showSearchResults && onNavigateCamera && (
+        <TouchableOpacity
+          style={styles.cameraFab}
+          onPress={onNavigateCamera}
+          accessibilityLabel="Abrir camara para describir el entorno con IA"
+          accessibilityRole="button"
+          accessibilityHint="Captura el entorno y obtiene descripcion accesible"
+        >
+          <Text style={styles.cameraFabIcon} accessibilityElementsHidden>📷</Text>
+          <Text style={styles.cameraFabText}>Camara</Text>
+        </TouchableOpacity>
+      )}
+
       {/* Route selector */}
       {!selectedDestination && !showSearchResults && (
         <TouchableOpacity
@@ -579,6 +598,33 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25,
     shadowRadius: 5,
+  },
+  cameraFab: {
+    position: "absolute",
+    bottom: 288,
+    right: 16,
+    zIndex: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#7c3aed",
+    borderRadius: 28,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    minHeight: 48,
+    gap: 8,
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+  },
+  cameraFabIcon: {
+    fontSize: 18,
+  },
+  cameraFabText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#ffffff",
   },
   routeSelectorIcon: {
     fontSize: 18,
