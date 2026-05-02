@@ -17,6 +17,7 @@
     "@campus-gps/shared-types": "workspace:*",
     "@maplibre/maplibre-react-native": "^10",
     "@react-native-async-storage/async-storage": "1.24.0",
+    "@react-native-ml-kit/text-recognition": "^2.0.0",
     "expo": "~52.0.0",
     "expo-av": "^15.0.2",
     "expo-camera": "~16.0.0",

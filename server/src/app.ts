@@ -17,6 +17,7 @@ import { campusRoutes } from "./routes/campuses";
 import { moderationRoutes } from "./routes/moderation";
 import { userRoutes } from "./routes/users";
 import { visionRoutes } from "./routes/vision";
+import { textSimplifyRoutes } from "./routes/textSimplify";
 
 const app = new Hono();
 
@@ -45,6 +46,7 @@ app.route("/api", campusRoutes);
 app.route("/api", moderationRoutes);
 app.route("/api", userRoutes);
 app.route("/api", visionRoutes);
+app.route("/api", textSimplifyRoutes);
 
 // 404 handler
 app.notFound((c) => {

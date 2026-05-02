@@ -14,6 +14,12 @@ import * as Speech from "expo-speech";
 import { useCamera } from "../hooks/useCamera";
 import { imageToBase64, compressImage } from "../services/cameraService";
 import { describeImage, type VisionDescribeResponse } from "../services/visionService";
+import {
+  recognizeText,
+  isMeaningfulText,
+  simplifyForEasyRead,
+  type OcrResult,
+} from "../services/ocrService";
 import { useAccessibilityStore } from "../store/accessibilityStore";
 import { useLocationStore } from "../store/locationStore";
 import { useCaptureStore } from "../store/captureStore";
@@ -39,14 +45,18 @@ const SURFACE_LABELS: Record<string, string> = {
   unknown: "Sin determinar",
 };
 
+type CameraMode = "vision" | "ocr";
+
 export default function CameraScreen({ onClose, onOpenHistory }: CameraScreenProps) {
   const { permission, requestPermission } = useCamera();
   const cameraRef = useRef<CameraView | null>(null);
   const [facing] = useState<CameraType>("back");
+  const [mode, setMode] = useState<CameraMode>("vision");
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<VisionDescribeResponse | null>(null);
+  const [ocrResult, setOcrResult] = useState<OcrResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savedToHistory, setSavedToHistory] = useState(false);
   const profile = useAccessibilityStore((s) => s.profile);
@@ -115,13 +125,49 @@ export default function CameraScreen({ onClose, onOpenHistory }: CameraScreenPro
       });
       if (photo?.uri) {
         setCapturedUri(photo.uri);
-        // Auto-trigger analysis
-        await analyzeImage(photo.uri);
+        // Auto-trigger analysis based on selected mode
+        if (mode === "ocr") {
+          await runOcr(photo.uri);
+        } else {
+          await analyzeImage(photo.uri);
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al capturar");
     } finally {
       setIsCapturing(false);
+    }
+  };
+
+  // FR-1201: Run OCR on captured image
+  const runOcr = async (uri: string) => {
+    setAnalyzing(true);
+    setError(null);
+    setOcrResult(null);
+    setResult(null);
+    setSavedToHistory(false);
+    try {
+      const ocr = await recognizeText(uri);
+      if (!isMeaningfulText(ocr.text)) {
+        setError(
+          "No se detecto texto legible. Apunta directamente a un cartel o senalizacion."
+        );
+        setOcrResult(ocr);
+        return;
+      }
+
+      let textToSpeak = ocr.text;
+      // FR-1201: Simplify for easy_read profile
+      if (profile === "easy_read") {
+        textToSpeak = await simplifyForEasyRead(ocr.text);
+      }
+
+      setOcrResult({ ...ocr, text: textToSpeak });
+      Speech.speak(textToSpeak, { language: "es-ES", rate: 1.0 });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error en OCR");
+    } finally {
+      setAnalyzing(false);
     }
   };
 
@@ -188,7 +234,14 @@ export default function CameraScreen({ onClose, onOpenHistory }: CameraScreenPro
     Speech.stop();
     setCapturedUri(null);
     setResult(null);
+    setOcrResult(null);
     setError(null);
+  };
+
+  const handleSpeakAgainOcr = () => {
+    if (!ocrResult) return;
+    Speech.stop();
+    Speech.speak(ocrResult.text, { language: "es-ES", rate: 1.0 });
   };
 
   // Captured photo + result view
@@ -242,6 +295,24 @@ export default function CameraScreen({ onClose, onOpenHistory }: CameraScreenPro
               accessibilityLiveRegion="assertive"
             >
               <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+
+          {/* FR-1201: OCR result */}
+          {ocrResult && ocrResult.text && (
+            <View style={styles.descriptionBox} accessibilityLiveRegion="polite">
+              <Text style={styles.cardTitle} accessibilityRole="header">
+                📄 Texto detectado
+              </Text>
+              <Text style={styles.descriptionText}>{ocrResult.text}</Text>
+              <TouchableOpacity
+                style={styles.speakBtn}
+                onPress={handleSpeakAgainOcr}
+                accessibilityRole="button"
+                accessibilityLabel="Leer texto en voz alta otra vez"
+              >
+                <Text style={styles.speakBtnText}>🔊 Leer de nuevo</Text>
+              </TouchableOpacity>
             </View>
           )}
 
@@ -375,6 +446,31 @@ export default function CameraScreen({ onClose, onOpenHistory }: CameraScreenPro
           </View>
 
           <View style={styles.bottomBar}>
+            {/* FR-1201: Mode toggle (Vision IA vs OCR) */}
+            <View style={styles.modeToggle}>
+              <TouchableOpacity
+                style={[styles.modeBtn, mode === "vision" && styles.modeBtnActive]}
+                onPress={() => setMode("vision")}
+                accessibilityRole="button"
+                accessibilityLabel="Modo describir entorno con IA"
+                accessibilityState={{ selected: mode === "vision" }}
+              >
+                <Text style={[styles.modeBtnText, mode === "vision" && styles.modeBtnTextActive]}>
+                  🤖 Describir
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modeBtn, mode === "ocr" && styles.modeBtnActive]}
+                onPress={() => setMode("ocr")}
+                accessibilityRole="button"
+                accessibilityLabel="Modo leer texto OCR"
+                accessibilityState={{ selected: mode === "ocr" }}
+              >
+                <Text style={[styles.modeBtnText, mode === "ocr" && styles.modeBtnTextActive]}>
+                  📄 Leer texto
+                </Text>
+              </TouchableOpacity>
+            </View>
             <Text style={styles.profileHint}>
               Perfil: {profileLabel(profile)}
             </Text>
@@ -383,8 +479,16 @@ export default function CameraScreen({ onClose, onOpenHistory }: CameraScreenPro
               onPress={handleCapture}
               disabled={isCapturing}
               accessibilityRole="button"
-              accessibilityLabel="Tomar foto y describir entorno"
-              accessibilityHint="Captura el entorno y obtiene descripcion con IA"
+              accessibilityLabel={
+                mode === "ocr"
+                  ? "Tomar foto y leer texto del cartel"
+                  : "Tomar foto y describir entorno"
+              }
+              accessibilityHint={
+                mode === "ocr"
+                  ? "Reconoce el texto en la imagen y lo lee en voz alta"
+                  : "Captura el entorno y obtiene descripcion con IA"
+              }
             >
               {isCapturing ? (
                 <ActivityIndicator color="#1a1a2e" />
@@ -392,7 +496,9 @@ export default function CameraScreen({ onClose, onOpenHistory }: CameraScreenPro
                 <View style={styles.captureBtnInner} />
               )}
             </TouchableOpacity>
-            <Text style={styles.captureLabel}>¿Que veo?</Text>
+            <Text style={styles.captureLabel}>
+              {mode === "ocr" ? "Leer texto" : "¿Que veo?"}
+            </Text>
           </View>
         </View>
       </CameraView>
@@ -504,6 +610,31 @@ const styles = StyleSheet.create({
     paddingBottom: 48,
     backgroundColor: "rgba(0,0,0,0.5)",
     paddingTop: 16,
+  },
+  modeToggle: {
+    flexDirection: "row",
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderRadius: 20,
+    padding: 4,
+    marginBottom: 16,
+  },
+  modeBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 16,
+    minHeight: 36,
+    justifyContent: "center",
+  },
+  modeBtnActive: {
+    backgroundColor: "#fff",
+  },
+  modeBtnText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  modeBtnTextActive: {
+    color: "#1a1a2e",
   },
   profileHint: {
     color: "#fff",
