@@ -9,6 +9,7 @@ import CampusSelectionScreen from "./src/screens/CampusSelectionScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
 import CameraScreen from "./src/screens/CameraScreen";
 import CaptureHistoryScreen from "./src/screens/CaptureHistoryScreen";
+import ContextPanel from "./src/screens/ContextPanel";
 import { useAuthStore } from "./src/store/authStore";
 import { useCampusStore } from "./src/store/campusStore";
 
@@ -20,7 +21,8 @@ type Screen =
   | "map"
   | "profile"
   | "camera"
-  | "captureHistory";
+  | "captureHistory"
+  | "contextPanel";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("loading");
@@ -145,6 +147,15 @@ export default function App() {
     );
   }
 
+  if (screen === "contextPanel") {
+    return (
+      <>
+        <StatusBar style="light" />
+        <ContextPanel onBack={() => setScreen("map")} />
+      </>
+    );
+  }
+
   // Default: map screen
   return (
     <>
@@ -153,6 +164,7 @@ export default function App() {
         onNavigateProfile={() => setScreen("profile")}
         onNavigateCampus={() => setScreen("campus")}
         onNavigateCamera={() => setScreen("camera")}
+        onNavigateContext={() => setScreen("contextPanel")}
       />
     </>
   );

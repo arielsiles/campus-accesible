@@ -38,12 +38,14 @@ interface MapScreenProps {
   onNavigateProfile?: () => void;
   onNavigateCampus?: () => void;
   onNavigateCamera?: () => void;
+  onNavigateContext?: () => void;
 }
 
 export default function MapScreen({
   onNavigateProfile,
   onNavigateCampus,
   onNavigateCamera,
+  onNavigateContext,
 }: MapScreenProps = {}) {
   const authUser = useAuthStore((s) => s.user);
   const center = useMapStore((s) => s.center);
@@ -424,6 +426,19 @@ export default function MapScreen({
         >
           <Text style={styles.cameraFabIcon} accessibilityElementsHidden>📷</Text>
           <Text style={styles.cameraFabText}>Camara</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* FR-1205: Info contextual FAB */}
+      {!selectedDestination && !showSearchResults && onNavigateContext && (
+        <TouchableOpacity
+          style={styles.infoFab}
+          onPress={onNavigateContext}
+          accessibilityLabel="Informacion del entorno: clima y lugares cercanos"
+          accessibilityRole="button"
+        >
+          <Text style={styles.infoFabIcon} accessibilityElementsHidden>ℹ️</Text>
+          <Text style={styles.infoFabText}>Info</Text>
         </TouchableOpacity>
       )}
 
@@ -846,6 +861,33 @@ const styles = StyleSheet.create({
   directionCancelText: {
     color: "#666",
     fontSize: 15,
+  },
+  infoFab: {
+    position: "absolute",
+    bottom: 352,
+    right: 16,
+    zIndex: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#0891b2",
+    borderRadius: 28,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    minHeight: 48,
+    gap: 8,
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+  },
+  infoFabIcon: {
+    fontSize: 18,
+  },
+  infoFabText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#ffffff",
   },
   cameraFab: {
     position: "absolute",

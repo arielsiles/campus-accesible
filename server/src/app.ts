@@ -18,6 +18,7 @@ import { moderationRoutes } from "./routes/moderation";
 import { userRoutes } from "./routes/users";
 import { visionRoutes } from "./routes/vision";
 import { textSimplifyRoutes } from "./routes/textSimplify";
+import { contextRoutes } from "./routes/context";
 
 const app = new Hono();
 
@@ -47,6 +48,7 @@ app.route("/api", moderationRoutes);
 app.route("/api", userRoutes);
 app.route("/api", visionRoutes);
 app.route("/api", textSimplifyRoutes);
+app.route("/api", contextRoutes);
 
 // 404 handler
 app.notFound((c) => {
